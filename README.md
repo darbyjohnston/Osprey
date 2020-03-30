@@ -203,7 +203,7 @@ Open the control panel and add a new environment variable called
 Open a Visual Studio 2017 x64 Native Tools Command Prompt. Choose a directory
 and clone the repository:
 ```
-> git clone https://github.com/darbyjohnston/Osprey/Osprey.git
+> git clone https://github.com/darbyjohnston/Osprey.git
 ```
 
 Open the "Osprey.sln" file with Visual Studio 2017 and start debugging. When the
