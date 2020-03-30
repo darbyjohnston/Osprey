@@ -46,6 +46,7 @@ TODO:
 * Add macOS support - https://github.com/darbyjohnston/Osprey/issues/13
 * Binary packages - https://github.com/darbyjohnston/Osprey/issues/14
 * Previews - https://github.com/darbyjohnston/Osprey/issues/15
+* Continuous integration builds - https://github.com/darbyjohnston/Osprey/issues/16
 
 
 Renders
