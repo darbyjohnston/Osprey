@@ -132,19 +132,19 @@ Rhino 6 renderer:
 
 OSPRay path tracer:
 * Xeon E5-1630:
-* Ryzen 7 1700:
+* Ryzen 7 1700: 1m 22s
 
 ![NYC MN08 Camera 1 OSPRay SciVis renderer](Renders/NYC_MN08-Camera_1-OSPRay_scivis.png)
 
 OSPRay SciVis renderer:
 * Xeon E5-1630:
-* Ryzen 7 1700:
+* Ryzen 7 1700: 1m 10s
 
 ![NYC MN08 Camera 1 Rhino 6 renderer](Renders/NYC_MN08-Camera_1-Rhino_6.png)
 
 Rhino 6 renderer:
 * Xeon E5-1630:
-* Ryzen 7 1700:
+* Ryzen 7 1700: 6m 8s
 
 #### MN08 Camera 2
 ![NYC MN08 Camera 2 OSPRay path tracer](Renders/NYC_MN08-Camera_2-OSPRay_pathtracer.png)
@@ -163,7 +163,7 @@ OSPRay SciVis renderer:
 
 Rhino 6 renderer:
 * Xeon E5-1630:
-* Ryzen 7 1700:
+* Ryzen 7 1700: 16m 49s
 
 
 Building the Plugin
