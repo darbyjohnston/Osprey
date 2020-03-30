@@ -13,7 +13,7 @@ Intel OSPRay: https://www.ospray.org/
 This plugin is in the early stages of development and is currently only released
 as source code.
 
-![Camera 1 OSPRay path tracer](Renders/NYC MN01 Camera 2 OSPRay pathtracer.png)
+![Camera 1 OSPRay path tracer](Renders/NYC_MN01-Camera_2-OSPRay_pathtracer.png)
 
 
 Features
@@ -90,76 +90,76 @@ Test machines:
 * Ryzen 7 1700 8 cores @ 3.0GHz, 16GB RAM, Windows 10
 
 #### MN01 Camera 1
-![NYC MN01 Camera 1 OSPRay path tracer](Renders/NYC MN01 Camera 1 OSPRay pathtracer.png)
+![NYC MN01 Camera 1 OSPRay path tracer](Renders/NYC_MN01-Camera_1-OSPRay_pathtracer.png)
 
 OSPRay path tracer:
 * Xeon E5-1630:
 * Ryzen 7 1700: 1m 9s
 
-![NYC MN01 Camera 1 OSPRay SciVis renderer](Renders/NYC MN01 Camera 1 OSPRay scivis.png)
+![NYC MN01 Camera 1 OSPRay SciVis renderer](Renders/NYC_MN01-Camera_1-OSPRay_scivis.png)
 
 OSPRay SciVis renderer:
 * Xeon E5-1630:
 * Ryzen 7 1700: 1m 12s
 
-![NYC MN01 Camera 1 Rhino 6 renderer](Renders/NYC MN01 Camera 1 Rhino 6.png)
+![NYC MN01 Camera 1 Rhino 6 renderer](Renders/NYC_MN01-Camera_1-Rhino_6.png)
 
 Rhino 6 renderer:
 * Xeon E5-1630:
 * Ryzen 7 1700: 2m 50s
 
 #### MN01 Camera 2
-![NYC MN01 Camera 2 OSPRay path tracer](Renders/NYC MN01 Camera 2 OSPRay pathtracer.png)
+![NYC MN01 Camera 2 OSPRay path tracer](Renders/NYC_MN01-Camera_2-OSPRay_pathtracer.png)
 
 OSPRay path tracer:
 * Xeon E5-1630:
 *	Ryzen 7 1700: 1m 5s
 
-![NYC MN01 Camera 2 OSPRay SciVis renderer](Renders/NYC MN01 Camera 2 OSPRay scivis.png)
+![NYC MN01 Camera 2 OSPRay SciVis renderer](Renders/NYC_MN01-Camera_2-OSPRay_scivis.png)
 
 OSPRay SciVis renderer:
 * Xeon E5-1630:
 * Ryzen 7 1700: 57s
 
-![NYC MN01 Camera 2 Rhino 6 renderer](Renders/NYC MN01 Camera 2 Rhino 6.png)
+![NYC MN01 Camera 2 Rhino 6 renderer](Renders/NYC_MN01-Camera_2-Rhino_6.png)
 
 Rhino 6 renderer:
 * Xeon E5-1630:
 * Ryzen 7 1700: 2m 20s
 
 #### MN08 Camera 1
-![NYC MN08 Camera 1 OSPRay path tracer](Renders/NYC MN08 Camera 1 OSPRay pathtracer.png)
+![NYC MN08 Camera 1 OSPRay path tracer](Renders/NYC_MN08-Camera_1-OSPRay_pathtracer.png)
 
 OSPRay path tracer:
 * Xeon E5-1630:
 * Ryzen 7 1700:
 
-![NYC MN08 Camera 1 OSPRay SciVis renderer](Renders/NYC MN08 Camera 1 OSPRay scivis.png)
+![NYC MN08 Camera 1 OSPRay SciVis renderer](Renders/NYC_MN08-Camera_1-OSPRay_scivis.png)
 
 OSPRay SciVis renderer:
 * Xeon E5-1630:
 * Ryzen 7 1700:
 
-![NYC MN08 Camera 1 Rhino 6 renderer](Renders/NYC MN08 Camera 1 Rhino 6.png)
+![NYC MN08 Camera 1 Rhino 6 renderer](Renders/NYC_MN08-Camera_1-Rhino_6.png)
 
 Rhino 6 renderer:
 * Xeon E5-1630:
 * Ryzen 7 1700:
 
 #### MN08 Camera 2
-![NYC MN08 Camera 2 OSPRay path tracer](Renders/NYC MN08 Camera 2 OSPRay pathtracer.png)
+![NYC MN08 Camera 2 OSPRay path tracer](Renders/NYC_MN08-Camera_2-OSPRay_pathtracer.png)
 
 OSPRay path tracer:
 * Xeon E5-1630:
 * Ryzen 7 1700: 1m 26s
 
-![NYC MN08 Camera 2 OSPRay SciVis renderer](Renders/NYC MN08 Camera 2 OSPRay scivis.png)
+![NYC MN08 Camera 2 OSPRay SciVis renderer](Renders/NYC_MN08-Camera_2-OSPRay_scivis.png)
 
 OSPRay SciVis renderer:
 * Xeon E5-1630:
 * Ryzen 7 1700: 1m 25s
 
-![NYC MN08 Camera 2 Rhino 6 renderer](Renders/NYC MN08 Camera 2 Rhino 6.png)
+![NYC MN08 Camera 2 Rhino 6 renderer](Renders/NYC_MN08-Camera_2-Rhino_6.png)
 
 Rhino 6 renderer:
 * Xeon E5-1630:
