@@ -32,20 +32,20 @@ Completed or in-progress:
 * Render settings UI
 
 TODO:
-* Lights
-* Create render meshes
-* Backgrounds
-* Environments
-* Groups
-* Points
-* Curves
-* PBR materials
-* Textures
-* Async rendering
-* Interactive viewport rendering
-* Add macOS support
-* Binary packages
-* Previews
+* Lights - https://github.com/darbyjohnston/Osprey/issues/2
+* Create render meshes - https://github.com/darbyjohnston/Osprey/issues/3
+* Backgrounds - https://github.com/darbyjohnston/Osprey/issues/4
+* Environments - https://github.com/darbyjohnston/Osprey/issues/5
+* Groups - https://github.com/darbyjohnston/Osprey/issues/6
+* Points - https://github.com/darbyjohnston/Osprey/issues/7
+* Curves - https://github.com/darbyjohnston/Osprey/issues/8
+* PBR materials - https://github.com/darbyjohnston/Osprey/issues/9
+* Textures - https://github.com/darbyjohnston/Osprey/issues/10
+* Async rendering - https://github.com/darbyjohnston/Osprey/issues/11
+* Interactive viewport rendering - https://github.com/darbyjohnston/Osprey/issues/12
+* Add macOS support - https://github.com/darbyjohnston/Osprey/issues/13
+* Binary packages - https://github.com/darbyjohnston/Osprey/issues/14
+* Previews - https://github.com/darbyjohnston/Osprey/issues/15
 
 
 Renders
