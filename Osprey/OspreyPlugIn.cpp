@@ -63,15 +63,27 @@ GUID COspreyPlugIn::PlugInID() const
 
 BOOL COspreyPlugIn::OnLoadPlugIn()
 {
-	ASSERT(RhRdkIsAvailable());
+    ASSERT(RhRdkIsAvailable());
 
-	// Initialize OSPRay.
+    // Initialize OSPRay.
+    ON_wString pluginFolder;
+    GetPlugInFolder(pluginFolder);
+    size_t envSize = 0;
+    wchar_t* envP = 0;
+    if (0 == _wdupenv_s(&envP, &envSize, L"PATH"))
+    {
+        if (envP)
+        {
+            ON_wString path = ON_wString(envP) + L";" + pluginFolder;
+            _wputenv_s(L"PATH", path);
+        }
+    }
 	_settings = Osprey::Settings::create();
 	_settings->setDenoiserFound(ospLoadModule("denoiser") == OSP_NO_ERROR);
-	OSPError ospError = ospInit();
+    OSPError ospError = ospInit();
 	if (ospError != OSP_NO_ERROR)
 	{
-		RhinoApp().Print("Osprey ERROR: %s\n", Osprey::getErrorMessage(ospError).c_str());
+        Osprey::printError("Cannot initialize: " + Osprey::getErrorMessage(ospError));
 		return false;
 	}
 	OSPDevice device = ospGetCurrentDevice();
