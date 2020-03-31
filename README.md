@@ -90,67 +90,63 @@ Test machines:
 * Xeon E5-1630 v4 4 Cores @ 3.7GHz, 64GB RAM, Windows 10
 * Ryzen 7 1700 8 cores @ 3.0GHz, 16GB RAM, Windows 10
 
-#### MN01 Camera 1
-![NYC MN01 Camera 1 OSPRay path tracer](Renders/NYC_MN01-Camera_1-OSPRay_pathtracer.png)
-OSPRay path tracer:
+#### MN01 Camera 1, OSPRay Path Tracer
+![NYC MN01 Camera 1, OSPRay Path Tracer](Renders/NYC_MN01-Camera_1-OSPRay_pathtracer.png)
 * Xeon E5-1630: 1m 27s
 * Ryzen 7 1700: 1m 9s
 
-![NYC MN01 Camera 1 OSPRay SciVis renderer](Renders/NYC_MN01-Camera_1-OSPRay_scivis.png)
-OSPRay SciVis renderer:
+#### MN01 Camera 1, OSPRay SciVis Renderer
+![NYC MN01 Camera 1, OSPRay SciVis Renderer](Renders/NYC_MN01-Camera_1-OSPRay_scivis.png)
 * Xeon E5-1630: 1m 24s
 * Ryzen 7 1700: 1m 12s
 
-![NYC MN01 Camera 1 Rhino 6 renderer](Renders/NYC_MN01-Camera_1-Rhino_6.png)
-Rhino 6 renderer:
+#### MN01 Camera 1, Rhino 6 Renderer
+![NYC MN01 Camera 1, Rhino 6 Renderer](Renders/NYC_MN01-Camera_1-Rhino_6.png)
 * Xeon E5-1630: 11m 41s
 * Ryzen 7 1700: 2m 50s
 
-#### MN01 Camera 2
-![NYC MN01 Camera 2 OSPRay path tracer](Renders/NYC_MN01-Camera_2-OSPRay_pathtracer.png)
-OSPRay path tracer:
+#### MN01 Camera 2, OSPRay Path Tracer
+![NYC MN01 Camera 2, OSPRay Path Tracer](Renders/NYC_MN01-Camera_2-OSPRay_pathtracer.png)
 * Xeon E5-1630: 1m 16s
 * Ryzen 7 1700: 1m 5s
 
-![NYC MN01 Camera 2 OSPRay SciVis renderer](Renders/NYC_MN01-Camera_2-OSPRay_scivis.png)
-OSPRay SciVis renderer:
+#### MN01 Camera 2, OSPRay SciVis Renderer
+![NYC MN01 Camera 2, OSPRay SciVis Renderer](Renders/NYC_MN01-Camera_2-OSPRay_scivis.png)
 * Xeon E5-1630: 1m 24s
 * Ryzen 7 1700: 57s
 
-![NYC MN01 Camera 2 Rhino 6 renderer](Renders/NYC_MN01-Camera_2-Rhino_6.png)
-Rhino 6 renderer:
+#### MN01 Camera 2, Rhino 6 Renderer
+![NYC MN01 Camera 2, Rhino 6 Renderer](Renders/NYC_MN01-Camera_2-Rhino_6.png)
 * Xeon E5-1630: 8m 16s
 * Ryzen 7 1700: 2m 20s
 
-#### MN08 Camera 1
-![NYC MN08 Camera 1 OSPRay path tracer](Renders/NYC_MN08-Camera_1-OSPRay_pathtracer.png)
-OSPRay path tracer:
+#### MN08 Camera 1, OSPRay Path Tracer
+![NYC MN08 Camera 1, OSPRay Path Tracer](Renders/NYC_MN08-Camera_1-OSPRay_pathtracer.png)
 * Xeon E5-1630: 1m 53s
 * Ryzen 7 1700: 1m 22s
 
-![NYC MN08 Camera 1 OSPRay SciVis renderer](Renders/NYC_MN08-Camera_1-OSPRay_scivis.png)
-OSPRay SciVis renderer:
+#### MN08 Camera 1, OSPRay SciVis Renderer
+![NYC MN08 Camera 1, OSPRay SciVis Renderer](Renders/NYC_MN08-Camera_1-OSPRay_scivis.png)
 * Xeon E5-1630: 1m 31s
 * Ryzen 7 1700: 1m 10s
 
-![NYC MN08 Camera 1 Rhino 6 renderer](Renders/NYC_MN08-Camera_1-Rhino_6.png)
-Rhino 6 renderer:
+#### MN08 Camera 1, Rhino 6 Renderer
+![NYC MN08 Camera 1, Rhino 6 Renderer](Renders/NYC_MN08-Camera_1-Rhino_6.png)
 * Xeon E5-1630:  13m 29s
 * Ryzen 7 1700: 6m 8s
 
-#### MN08 Camera 2
-![NYC MN08 Camera 2 OSPRay path tracer](Renders/NYC_MN08-Camera_2-OSPRay_pathtracer.png)
-OSPRay path tracer:
+#### MN08 Camera 2, OSPRay Path Tracer
+![NYC MN08 Camera 2, OSPRay Path Tracer](Renders/NYC_MN08-Camera_2-OSPRay_pathtracer.png)
 * Xeon E5-1630: 2m 10s
 * Ryzen 7 1700: 1m 26s
 
-![NYC MN08 Camera 2 OSPRay SciVis renderer](Renders/NYC_MN08-Camera_2-OSPRay_scivis.png)
-OSPRay SciVis renderer:
+#### MN08 Camera 2, OSPRay SciVis Renderer
+![NYC MN08 Camera 2, OSPRay SciVis Renderer](Renders/NYC_MN08-Camera_2-OSPRay_scivis.png)
 * Xeon E5-1630: 1m 48s
 * Ryzen 7 1700: 1m 25s
 
-![NYC MN08 Camera 2 Rhino 6 renderer](Renders/NYC_MN08-Camera_2-Rhino_6.png)
-Rhino 6 renderer:
+#### MN08 Camera 2, Rhino 6 Renderer
+![NYC MN08 Camera 2, Rhino 6 Renderer](Renders/NYC_MN08-Camera_2-Rhino_6.png)
 * Xeon E5-1630: 19m 13s
 * Ryzen 7 1700: 16m 49s
 
