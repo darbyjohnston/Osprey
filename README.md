@@ -208,6 +208,11 @@ Tag the git repository:
 A RHI package is generated automatically as part of the project's build events.
 Add the package to the release page on GitHub.
 
+Bump the version number in Visual Studio:
+* Change the configuration to "Release"
+* Right click the "Osprey" project and click "Properties"
+* In the dialogs that pops-up, click "Build Events/Post-Build Event"
+* Edit the command-line to reflect the new version number
 
 Contributing
 ============
