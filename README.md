@@ -44,7 +44,6 @@ TODO:
 * Async rendering - https://github.com/darbyjohnston/Osprey/issues/11
 * Interactive viewport rendering - https://github.com/darbyjohnston/Osprey/issues/12
 * Add macOS support - https://github.com/darbyjohnston/Osprey/issues/13
-* Binary packages - https://github.com/darbyjohnston/Osprey/issues/14
 * Previews - https://github.com/darbyjohnston/Osprey/issues/15
 * Continuous integration builds - https://github.com/darbyjohnston/Osprey/issues/16
 
@@ -198,6 +197,16 @@ Install the Osprey plugin from the menu "Tools/Options...". The plugin is named
 "Osprey.rhp" and is located in the sub-directory "x64\Debug" or "x64\Release"
 depending on your build configuration. Note that if you change the build
 configuration you will need to reinstall the plugin.
+
+#### Packaging
+Tag the git repository:
+```
+> git tag -a v0.1.0 -m "Version 0.1.0"
+> git push origin v0.1.0
+```
+
+A RHI package is generated automatically as part of the project's build events.
+Add the package to the release page on GitHub.
 
 
 Contributing
