@@ -97,9 +97,14 @@ Rhino 6 renderer settings:
 * Quality: Good
 * Building diffuse color: 220, 240, 250
 
+Rhino 7 WIP renderer settings:
+* Resolution: 1920x1080
+* Quality: Good
+* Building diffuse color: 220, 240, 250
+
 Test machines:
-* Xeon E5-1630 v4 4 Cores @ 3.7GHz, 64GB RAM, Windows 10
-* Ryzen 7 1700 8 cores @ 3.0GHz, 16GB RAM, Windows 10
+* Xeon E5-1630 v4 4 Cores @ 3.7GHz, 64GB RAM, NVIDIA Quadro P5000, Windows 10
+* Ryzen 7 1700 8 cores @ 3.0GHz, 16GB RAM, NVIDIA GeForce 660Ti, Windows 10
 
 #### MN01 Camera 1, OSPRay Path Tracer
 ![NYC MN01 Camera 1, OSPRay Path Tracer](Images/NYC_MN01-Camera_1-OSPRay_pathtracer.png)
@@ -116,6 +121,11 @@ Test machines:
 * Xeon E5-1630: 11m 41s
 * Ryzen 7 1700: 2m 50s
 
+#### MN01 Camera 1, Rhino 7 WIP Renderer
+![NYC MN01 Camera 1, Rhino 7 WIP Renderer](Images/NYC_MN01-Camera_1-Rhino_7_WIP.png)
+* Xeon E5-1630: 9m 56s
+* Ryzen 7 1700:
+
 #### MN01 Camera 2, OSPRay Path Tracer
 ![NYC MN01 Camera 2, OSPRay Path Tracer](Images/NYC_MN01-Camera_2-OSPRay_pathtracer.png)
 * Xeon E5-1630: 1m 16s
@@ -131,6 +141,11 @@ Test machines:
 * Xeon E5-1630: 8m 16s
 * Ryzen 7 1700: 2m 20s
 
+#### MN01 Camera 2, Rhino 7 WIP Renderer
+![NYC MN01 Camera 2, Rhino 7 WIP Renderer](Images/NYC_MN01-Camera_2-Rhino_7_WIP.png)
+* Xeon E5-1630: 8m 36s
+* Ryzen 7 1700:
+
 #### MN08 Camera 1, OSPRay Path Tracer
 ![NYC MN08 Camera 1, OSPRay Path Tracer](Images/NYC_MN08-Camera_1-OSPRay_pathtracer.png)
 * Xeon E5-1630: 1m 53s
@@ -143,8 +158,13 @@ Test machines:
 
 #### MN08 Camera 1, Rhino 6 Renderer
 ![NYC MN08 Camera 1, Rhino 6 Renderer](Images/NYC_MN08-Camera_1-Rhino_6.png)
-* Xeon E5-1630:  13m 29s
+* Xeon E5-1630: 13m 29s
 * Ryzen 7 1700: 6m 8s
+
+#### MN08 Camera 1, Rhino 7 WIP Renderer
+![NYC MN08 Camera 1, Rhino 7 WIP Renderer](Images/NYC_MN08-Camera_1-Rhino_7_WIP.png)
+* Xeon E5-1630: 1h 1m 38s
+* Ryzen 7 1700:
 
 #### MN08 Camera 2, OSPRay Path Tracer
 ![NYC MN08 Camera 2, OSPRay Path Tracer](Images/NYC_MN08-Camera_2-OSPRay_pathtracer.png)
@@ -160,6 +180,11 @@ Test machines:
 ![NYC MN08 Camera 2, Rhino 6 Renderer](Images/NYC_MN08-Camera_2-Rhino_6.png)
 * Xeon E5-1630: 19m 13s
 * Ryzen 7 1700: 16m 49s
+
+#### MN08 Camera 2, Rhino 7 WIP Renderer
+![NYC MN08 Camera 2, Rhino 7 WIP Renderer](Images/NYC_MN08-Camera_2-Rhino_7_WIP.png)
+* Xeon E5-1630: 57m 15s
+* Ryzen 7 1700:
 
 
 Building the Plugin
@@ -305,4 +330,5 @@ Trademarks named in the documentation (in alphabetical order):
   Intel Corporation in the U.S. and/or other countries
 * Microsoft, Microsoft Windows, and Visual Studio are registered trademarks of
   Microsoft, Inc.
+* NVIDIA and Quadro are registered trademarks of NVIDIA Corporation
 * Rhinoceros is a registered trademark of Robert McNeel & Associates
