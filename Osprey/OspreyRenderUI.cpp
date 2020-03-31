@@ -74,7 +74,7 @@ namespace Osprey
 
     ON_wString RenderUI::Caption(bool bAlwaysEnglish) const
     {
-        return L"Osprey Options";
+        return L"Osprey";
     }
 
     BOOL RenderUI::OnInitDialog()
