@@ -5,13 +5,19 @@ Overview
 Osprey is an open source plugin that integrates the OSPRay renderer with
 the Rhino 3D modeler. OSPRay is an "open source, scalable, and portable ray
 tracing engine for high-performance, high-fidelity visualization on Intel
-Architecture CPUs."
+Architecture CPUs." This plugin is still in the early stages of development.
 
 Robert McNeel & Associates Rhino: https://www.rhino3d.com<br>
 Intel OSPRay: https://www.ospray.org/
 
-This plugin is in the early stages of development and is currently only released
-as source code.
+Download the 0.1.0 release for Rhino 6 on Windows here:
+https://github.com/darbyjohnston/Osprey/releases/download/v0.1.0/Osprey-0.1-rh6-win-x64.rhi
+
+To install the plugin start Rhino and drag and drop the plugin file onto
+the Rhino application.
+
+To use the plugin change the current renderer in Rhino to "Osprey". There
+are some render settings in the "Osprey" section of the "Rendering" panel.
 
 ![Camera 1 OSPRay path tracer](Renders/NYC_MN01-Camera_2-OSPRay_pathtracer.png)
 
@@ -207,6 +213,8 @@ Tag the git repository:
 
 A RHI package is generated automatically as part of the project's build events.
 Add the package to the release page on GitHub.
+
+Bump the version number in the "Overview" section of this README.
 
 Bump the version number in Visual Studio:
 * Change the configuration to "Release"
