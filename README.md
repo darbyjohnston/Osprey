@@ -2,8 +2,8 @@
 
 Overview
 ========
-Osprey is an open source plugin that integrates the OSPRay renderer with
-the Rhino 3D modeler. OSPRay is an "open source, scalable, and portable ray
+Osprey is an open source plugin that integrates the OSPRay renderer and Rhino
+3D modeler. OSPRay is an "open source, scalable, and portable ray
 tracing engine for high-performance, high-fidelity visualization on Intel
 Architecture CPUs."
 
