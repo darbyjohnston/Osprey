@@ -10,7 +10,7 @@ Architecture CPUs." This plugin is still in the early stages of development.
 Robert McNeel & Associates Rhino: https://www.rhino3d.com<br>
 Intel OSPRay: https://www.ospray.org/
 
-Download the 0.1.0 release for Rhino 6 on Windows here:
+Download the 0.1.0 release for Rhino 6 on Windows:
 https://github.com/darbyjohnston/Osprey/releases/download/v0.1.0/Osprey-0.1-rh6-win-x64.rhi
 
 To install the plugin start Rhino and drag and drop the plugin file onto
