@@ -144,7 +144,7 @@
       <AdditionalIncludeDirectories>$(IntDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <PostBuildEvent>
-      <Command>7z a $(SolutionDir)$(Platform)\$(Configuration)\Osprey-0.2-rh6-win-$(Platform).zip $(SolutionDir)\README.md $(SolutionDir)\LICENSE.txt $(SolutionDir)$(Platform)\$(Configuration)\Osprey.rhp $(OSPRAY_INSTALL)\bin\*.dll $(OSPRAY_INSTALL)\bin\intel64\vc14\*.dll</Command>
+      <Command>7z a $(SolutionDir)$(Platform)\$(Configuration)\Osprey-0.2-rh6-win-$(Platform).zip $(SolutionDir)\README.md $(SolutionDir)\LICENSE.txt $(SolutionDir)$(Platform)\$(Configuration)\Osprey.rhp $(OSPRAY_INSTALL)\bin\*.dll $(OSPRAY_INSTALL)\bin\intel64\vc14\*.dll &amp;&amp; move $(SolutionDir)$(Platform)\$(Configuration)\Osprey-0.2-rh6-win-$(Platform).zip $(SolutionDir)$(Platform)\$(Configuration)\Osprey-0.2-rh6-win-$(Platform).rhi</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
