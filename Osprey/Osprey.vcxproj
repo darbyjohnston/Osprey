@@ -132,7 +132,7 @@
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(OSPRAY_INSTALL)\lib\intel64\vc14;$(OSPRAY_INSTALL)\lib</AdditionalLibraryDirectories>
-      <AdditionalDependencies>ospray.lib;ospcommon.lib;openvkl.lib;embree3.lib;OpenImageDenoise.lib;tbb.lib;tbbmalloc.lib;tbbmalloc_proxy.lib;tbb_preview.lib</AdditionalDependencies>
+      <AdditionalDependencies>ospray.lib</AdditionalDependencies>
     </Link>
     <Midl>
       <MkTypLibCompatible>false</MkTypLibCompatible>
@@ -143,6 +143,9 @@
       <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(IntDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
+    <PostBuildEvent>
+      <Command>7z a $(SolutionDir)$(Platform)\$(Configuration)\Osprey-0.1-rh6-win-$(Platform).zip $(SolutionDir)\README.md $(SolutionDir)\LICENSE.txt $(SolutionDir)$(Platform)\$(Configuration)\Osprey.rhp $(OSPRAY_INSTALL)\bin\*.dll $(OSPRAY_INSTALL)\bin\intel64\vc14\*.dll</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
