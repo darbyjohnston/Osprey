@@ -330,5 +330,5 @@ Trademarks named in the documentation (in alphabetical order):
   Intel Corporation in the U.S. and/or other countries
 * Microsoft, Microsoft Windows, and Visual Studio are registered trademarks of
   Microsoft, Inc.
-* NVIDIA and Quadro are registered trademarks of NVIDIA Corporation
+* NVIDIA, GeForce, and Quadro are registered trademarks of NVIDIA Corporation
 * Rhinoceros is a registered trademark of Robert McNeel & Associates
