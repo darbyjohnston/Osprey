@@ -17,7 +17,7 @@ namespace Osprey
 		const float groundPlaneScale = 10.F;
 
         // Curve radius.
-        const float curveRadius = 2.F;
+        const float curveRadius = .05F;
 
         // Light intensity multiplier.
         const float lightIntensityMul = 3.F;
@@ -764,23 +764,55 @@ namespace Osprey
 		ospray::cpp::Light light = nullptr;
 		if (onLight.IsEnabled())
 		{
-            switch (onLight.Style())
-            {
-            case ON::camera_directional_light:
-            case ON::world_directional_light:
-            {
-                light = ospray::cpp::Light("distant");
+			if (onLight.IsPointLight())
+			{
+				light = ospray::cpp::Light("sphere");
 
-                const auto cs = onLight.CoordinateSystem();
-                ON_Xform onXform;
-                onLight.GetLightXform(vp, ON::world_cs, onXform);
-                light.setParam("direction", fromRhino(onXform * onLight.Direction()));
-                break;
-            }
-            case ON::ambient_light:
-                break;
-            default: break;
-            }
+				const auto cs = onLight.CoordinateSystem();
+				ON_Xform onXform;
+				onLight.GetLightXform(vp, ON::world_cs, onXform);
+				const auto& onLocation = onLight.Location();
+				const ospcommon::math::vec3f pos = fromRhino(onXform * onLocation);
+				light.setParam("position", pos);
+
+				light.setParam("radius", 0.F);
+			}
+			else if (onLight.IsDirectionalLight())
+			{
+				light = ospray::cpp::Light("distant");
+
+				const auto cs = onLight.CoordinateSystem();
+				ON_Xform onXform;
+				onLight.GetLightXform(vp, ON::world_cs, onXform);
+				light.setParam("direction", fromRhino(onXform * onLight.Direction()));
+			}
+			else if (onLight.IsSpotLight())
+			{
+				light = ospray::cpp::Light("spot");
+
+				const auto cs = onLight.CoordinateSystem();
+				ON_Xform onXform;
+				onLight.GetLightXform(vp, ON::world_cs, onXform);
+				const auto& onLocation = onLight.Location();
+				const auto& onDirection = onLight.Direction();
+				const ospcommon::math::vec3f pos = fromRhino(onXform * onLocation);
+				const ospcommon::math::vec3f dir = fromRhino(onXform * onDirection);
+				light.setParam("position", pos);
+				light.setParam("direction", dir);
+
+				const float angle = onLight.SpotAngleDegrees();
+				light.setParam("openingAngle", angle * 2.F);
+				light.setParam("penumbraAngle", 0.F);
+				light.setParam("radius", 0.F);
+			}
+			else if (onLight.IsLinearLight())
+			{
+
+			}
+			else if (onLight.IsRectangularLight())
+			{
+
+			}
 			if (light)
 			{
 				light.setParam("color", fromRhino(onLight.Diffuse()));
