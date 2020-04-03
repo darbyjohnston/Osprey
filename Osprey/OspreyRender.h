@@ -9,8 +9,8 @@ namespace Osprey
 	class Render
 	{
 		Render();
-		Render(const Render &) = delete;
-		Render & operator = (const Render &) = delete;
+		Render(const Render&) = delete;
+		Render & operator = (const Render&) = delete;
 
 	public:
 		// Create a new instance.
@@ -46,7 +46,10 @@ namespace Osprey
 			const ospcommon::math::box2i& rectangle);
 
 		//! Convert the Rhino document to OSPRay.
-		void convert(CRhinoDoc*);
+		//void convert(CRhinoDoc*);
+		void setWorld(
+			const ospray::cpp::World&,
+			const ospray::cpp::Camera&);
 
 		//! Initialize rendering.
 		void initRender(IRhRdkRenderWindow&);
@@ -57,22 +60,7 @@ namespace Osprey
 		///@}
 
 	private:
-		void _convertMaterials(CRhinoDoc*);
-		void _convertObjects(CRhinoDoc*);
-		struct ObjectState
-		{
-			ospcommon::math::affine3f xform;
-			int materialIndex = -1;
-			bool instanceDefinition = false;
-		};
-		void _convertObject(CRhinoDoc*, const CRhinoObject*, const ObjectState&);
-		void _convertGroundPlane(CRhinoDoc*);
-		void _convertLights(CRhinoDoc*);
-        void _convertEnvironment(CRhinoDoc*);
-        void _convertCamera(CRhinoDoc*);
-
-		static ospray::cpp::Geometry _convertMesh(const ON_Mesh*);
-		static ospray::cpp::Light _convertLight(const ON_Light&, const ON_Viewport&);
+        void _initFrameBuffer(const ospcommon::math::vec2i&);
 
 		std::string _rendererName = "scivis";
 		size_t _passes = 8;
@@ -83,12 +71,8 @@ namespace Osprey
 
 		ospcommon::math::vec2i _windowSize;
 		ospcommon::math::box2i _renderRect;
+        ospcommon::math::vec2i _frameBufferSize;
 
-		std::vector<ospray::cpp::Geometry> _geometry;
-		std::map<const ON_Mesh*, size_t> _onMeshToGeometry;
-		std::vector<ospray::cpp::Instance> _instances;
-		std::vector<ospray::cpp::Material> _materials;
-		std::map<ON_UUID, size_t> _onLayerToMaterial;
 		ospray::cpp::World _world;
 		ospray::cpp::Camera _camera;
 		ospray::cpp::Renderer _renderer;

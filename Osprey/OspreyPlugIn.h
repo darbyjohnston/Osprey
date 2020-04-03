@@ -3,7 +3,9 @@
 
 #pragma once
 
+#include "OspreyChangeQueue.h"
 #include "OspreyEventWatcher.h"
+#include "OspreyRender.h"
 #include "OspreySettings.h"
 
 class OspreyRdkPlugIn;
@@ -40,8 +42,10 @@ public:
 	UINT MainFrameResourceID() const;
 
 private:
-	std::shared_ptr<Osprey::Settings> _settings;
-	ON_wString m_plugin_version;
+    std::shared_ptr<Osprey::Settings> _settings;
+    std::shared_ptr<Osprey::ChangeQueue> _changeQueue;
+    std::shared_ptr<Osprey::Render> _render;
+    ON_wString m_plugin_version;
 	COspreyEventWatcher m_event_watcher;
 	OspreyRdkPlugIn* m_pRdkPlugIn;
 };

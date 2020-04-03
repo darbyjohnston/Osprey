@@ -11,7 +11,9 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="OspreyChangeQueue.cpp" />
     <ClCompile Include="OspreyApp.cpp" />
+    <ClCompile Include="OspreyDisplayMode.cpp" />
     <ClCompile Include="OspreyEnum.cpp" />
     <ClCompile Include="OspreyEventWatcher.cpp" />
     <ClCompile Include="OspreyPlugIn.cpp" />
@@ -27,7 +29,9 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="OspreyChangeQueue.h" />
     <ClInclude Include="OspreyApp.h" />
+    <ClInclude Include="OspreyDisplayMode.h" />
     <ClInclude Include="OspreyEnum.h" />
     <ClInclude Include="OspreyEventWatcher.h" />
     <ClInclude Include="OspreyPlugIn.h" />

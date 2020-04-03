@@ -25,7 +25,7 @@ protected:
 	virtual bool CreatePreview(const ON_2iSize&, RhRdkPreviewQuality, const IRhRdkPreviewSceneServer*, IRhRdkPreviewCallbacks*, CRhinoDib&) override;
 	virtual bool CreatePreview(const ON_2iSize&, const CRhRdkTexture&, CRhinoDib&) override;
 
-	virtual bool SupportsFeature(const UUID& uuidFeature) const override;
+	virtual bool SupportsFeature(const UUID&) const override;
 
 	virtual void AddCustomRenderSettingsSections(RhRdkUiModalities, ON_SimpleArray<IRhinoUiSection*>&) const override;
 

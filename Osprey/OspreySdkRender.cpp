@@ -2,78 +2,36 @@
 // Copyright (c) 2020 Darby Johnston, All rights reserved
 
 #include "stdafx.h"
+#include "OspreyChangeQueue.h"
 #include "OspreySdkRender.h"
 #include "OspreyPlugIn.h"
 #include "OspreyUtil.h"
 
 OspreySdkRender::OspreySdkRender(
-	const std::shared_ptr<Osprey::Settings>& settings,
+    const std::shared_ptr<Osprey::ChangeQueue>& changeQueue,
+    const std::shared_ptr<Osprey::Render>& render,
 	const CRhinoCommandContext& context,
 	CRhinoRenderPlugIn& plugin,
 	const ON_wString& sCaption,
-	UINT id,
-	bool bPreview) :
-	CRhRdkSdkRender(context, plugin, sCaption, id)
+	UINT id) :
+	CRhRdkSdkRender(context, plugin, sCaption, id),
+    _changeQueue(changeQueue),
+    _render(render)
 {
-	m_bRenderQuick = bPreview;
-	m_bCancel = false;
-	m_bContinueModal = true;
-	m_hRenderThread = NULL;
-
 	auto& rhinoRenderWindow = GetRenderWindow();
 	rhinoRenderWindow.ClearChannels();
 	rhinoRenderWindow.AddChannel(IRhRdkRenderWindow::chanDistanceFromCamera, sizeof(float));
 	rhinoRenderWindow.AddChannel(IRhRdkRenderWindow::chanNormalX, sizeof(float));
 	rhinoRenderWindow.AddChannel(IRhRdkRenderWindow::chanNormalY, sizeof(float));
 	rhinoRenderWindow.AddChannel(IRhRdkRenderWindow::chanNormalZ, sizeof(float));
-
-	_osprey = Osprey::Render::create();
-	_osprey->setRendererName(Osprey::getRendererValues()[static_cast<size_t>(settings->observeRenderer()->get())]);
-	_osprey->setPasses(Osprey::getPassesValues()[static_cast<size_t>(settings->observePasses()->get())]);
-	_osprey->setPixelSamples(Osprey::getPixelSamplesValues()[static_cast<size_t>(settings->observePixelSamples()->get())]);
-	_osprey->setAOSamples(Osprey::getAOSamplesValues()[static_cast<size_t>(settings->observeAOSamples()->get())]);
-	_osprey->setDenoiserFound(settings->observeDenoiserFound()->get());
-	_osprey->setDenoiserEnabled(settings->observeDenoiserEnabled()->get());
 }
 
 OspreySdkRender::~OspreySdkRender()
 {
-	if (m_hRenderThread != NULL)
-	{
-		::WaitForSingleObject(m_hRenderThread, INFINITE);
-		::CloseHandle(m_hRenderThread);
-		m_hRenderThread = NULL;
-	}
-}
-
-void OspreySdkRender::setRenderer(Osprey::Renderer value)
-{
-	_osprey->setRendererName(Osprey::getRendererValues()[static_cast<size_t>(value)]);
-}
-
-void OspreySdkRender::setPasses(Osprey::Passes value)
-{
-	_osprey->setPasses(Osprey::getPassesValues()[static_cast<size_t>(value)]);
-}
-
-void OspreySdkRender::setPixelSamples(Osprey::PixelSamples value)
-{
-	_osprey->setPixelSamples(Osprey::getPixelSamplesValues()[static_cast<size_t>(value)]);
-}
-
-void OspreySdkRender::setAOSamples(Osprey::AOSamples value)
-{
-	_osprey->setAOSamples(Osprey::getAOSamplesValues()[static_cast<size_t>(value)]);
-}
-
-void OspreySdkRender::setDenoiserEnabled(bool value)
-{
-	_osprey->setDenoiserEnabled(value);
-}
-
-void OspreySdkRender::setDenoiserFound(bool value)
-{
-	_osprey->setDenoiserFound(value);
+    if (_renderThread.joinable())
+    {
+        _renderThread.join();
+    }
 }
 
 CRhinoSdkRender::RenderReturnCodes OspreySdkRender::Render(const ON_2iSize& sizeRender)
@@ -81,36 +39,30 @@ CRhinoSdkRender::RenderReturnCodes OspreySdkRender::Render(const ON_2iSize& size
 	if (!::RhRdkIsAvailable())
 		return CRhinoSdkRender::render_error_starting_render;
 
-	CRhinoDoc* rhinoDoc = CommandContext().Document();
-	if (nullptr == rhinoDoc)
-		return CRhinoSdkRender::render_error_starting_render;
-
-	_osprey->setRenderSize(
+	_render->setRenderSize(
 		Osprey::fromRhino(sizeRender),
 		ospcommon::math::box2i(
 			ospcommon::math::vec2i(0, 0),
 			ospcommon::math::vec2i(sizeRender.cx, sizeRender.cy)));
-	_osprey->convert(rhinoDoc);
 
-	CRhinoSdkRender::RenderReturnCodes rc = CRhRdkSdkRender::Render(sizeRender);
+    CRhinoSdkRender::RenderReturnCodes rc = CRhRdkSdkRender::Render(sizeRender);
 	return rc;
 }
 
-CRhinoSdkRender::RenderReturnCodes OspreySdkRender::RenderWindow(CRhinoView* pView, const LPRECT pRect, bool bInPopupWindow)
+CRhinoSdkRender::RenderReturnCodes OspreySdkRender::RenderWindow(CRhinoView* rhinoView, const LPRECT pRect, bool bInPopupWindow)
 {
 	if (!::RhRdkIsAvailable())
 		return CRhinoSdkRender::render_error_starting_render;
 
 	CRhinoDoc* rhinoDoc = CommandContext().Document();
-	if (nullptr == rhinoDoc)
+	if (!rhinoDoc)
 		return CRhinoSdkRender::render_error_starting_render;
 
-	_osprey->setRenderSize(
+    _render->setRenderSize(
 		Osprey::fromRhino(RenderSize(*rhinoDoc, true)),
 		ospcommon::math::box2i(
 			ospcommon::math::vec2i(pRect->left, pRect->top),
 			ospcommon::math::vec2i(pRect->right, pRect->bottom)));
-	_osprey->convert(rhinoDoc);
 
 	CRhinoSdkRender::RenderReturnCodes rc;
 	if (bInPopupWindow)
@@ -120,7 +72,7 @@ CRhinoSdkRender::RenderReturnCodes OspreySdkRender::RenderWindow(CRhinoView* pVi
 	}
 	else
 	{
-		rc = __super::RenderWindow(pView, pRect, bInPopupWindow);
+		rc = __super::RenderWindow(rhinoView, pRect, bInPopupWindow);
 	}
 	return rc;
 }
@@ -153,49 +105,39 @@ void OspreySdkRender::SetContinueModal(bool b)
 	m_bContinueModal = b;
 }
 
-void OspreySdkRender::RenderThread(void* pv)
-{
-	reinterpret_cast<OspreySdkRender*>(pv)->ThreadedRender();
-}
-
 void OspreySdkRender::StartRendering()
 {
-	m_hRenderThread = ::CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)RenderThread, this, 0, NULL);
+    _renderThread = std::thread(&OspreySdkRender::ThreadedRender, this);
 }
 
 BOOL OspreySdkRender::StartRenderingInWindow(CRhinoView*, const LPCRECT)
 {
-	m_hRenderThread = ::CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)RenderThread, this, 0, NULL);
-
-	return TRUE;
+    _renderThread = std::thread(&OspreySdkRender::ThreadedRender, this);
+    return TRUE;
 }
 
 void OspreySdkRender::StopRendering()
 {
-	if (NULL != m_hRenderThread)
-	{
-		m_bCancel = true;
-
-		::WaitForSingleObject(m_hRenderThread, INFINITE);
-		::CloseHandle(m_hRenderThread);
-		m_hRenderThread = NULL;
-	}
+    m_bCancel = true;
+    if (_renderThread.joinable())
+    {
+        _renderThread.join();
+    }
 }
 
-int OspreySdkRender::ThreadedRender(void)
+void OspreySdkRender::ThreadedRender(void)
 {
 	m_bCancel = false;
 
 	auto& rhinoRenderWindow = GetRenderWindow();
-	_osprey->initRender(rhinoRenderWindow);
-	const size_t passes = _osprey->getPasses();
+    _render->initRender(rhinoRenderWindow);
+	const size_t passes = _render->getPasses();
 	for (size_t i = 0; i < passes; ++i)
 	{
-		_osprey->renderPass(i, rhinoRenderWindow);
+        _render->renderPass(i, rhinoRenderWindow);
 		if (m_bCancel)
 			break;
 	}
 
 	SetContinueModal(false);
-	return 0;
 }

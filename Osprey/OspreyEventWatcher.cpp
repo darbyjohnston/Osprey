@@ -9,11 +9,11 @@ COspreyEventWatcher::COspreyEventWatcher()
 	Defaults();
 }
 
-void COspreyEventWatcher::Defaults( BOOL b)
+void COspreyEventWatcher::Defaults(BOOL b)
 {
-	  SetRenderMeshFlags( b);
-	  SetMaterialFlags( b);
-	  SetLightFlags( b);
+	  SetRenderMeshFlags(b);
+	  SetMaterialFlags(b);
+	  SetLightFlags(b);
 }
 
 BOOL COspreyEventWatcher::RenderSceneModified() const
@@ -108,7 +108,7 @@ void COspreyEventWatcher::SetLightFlags(BOOL b)
 	m_light_deleted = b;
 }
 
-void COspreyEventWatcher::OnEnableEventWatcher( BOOL b )
+void COspreyEventWatcher::OnEnableEventWatcher(BOOL b)
 {
 	UNREFERENCED_PARAMETER(b);
 	Defaults();
@@ -124,43 +124,43 @@ void COspreyEventWatcher::OnCloseRhino(CRhinoApp& app)
 	UNREFERENCED_PARAMETER(app);
 }
 
-void COspreyEventWatcher::OnCloseDocument( CRhinoDoc& doc )
+void COspreyEventWatcher::OnCloseDocument(CRhinoDoc& doc)
 {
 	UNREFERENCED_PARAMETER(doc);
 }
 
-void COspreyEventWatcher::OnNewDocument( CRhinoDoc& doc )
+void COspreyEventWatcher::OnNewDocument(CRhinoDoc& doc)
 {
 	UNREFERENCED_PARAMETER(doc);
-	Defaults( true);
+	Defaults(true);
 }
 
-void COspreyEventWatcher::OnBeginOpenDocument( CRhinoDoc& doc, const wchar_t* filename, BOOL bMerge, BOOL bReference )
-{
-	UNREFERENCED_PARAMETER(doc);
-	UNREFERENCED_PARAMETER(filename);
-	UNREFERENCED_PARAMETER(bMerge);
-	UNREFERENCED_PARAMETER(bReference);
-	Defaults( true);
-}
-
-void COspreyEventWatcher::OnEndOpenDocument( CRhinoDoc& doc, const wchar_t* filename, BOOL bMerge, BOOL bReference )
+void COspreyEventWatcher::OnBeginOpenDocument(CRhinoDoc& doc, const wchar_t* filename, BOOL bMerge, BOOL bReference)
 {
 	UNREFERENCED_PARAMETER(doc);
 	UNREFERENCED_PARAMETER(filename);
 	UNREFERENCED_PARAMETER(bMerge);
 	UNREFERENCED_PARAMETER(bReference);
-	Defaults( true);
+	Defaults(true);
 }
 
-void COspreyEventWatcher::OnBeginSaveDocument( CRhinoDoc& doc, const wchar_t* filename, BOOL bExportSelected )
+void COspreyEventWatcher::OnEndOpenDocument(CRhinoDoc& doc, const wchar_t* filename, BOOL bMerge, BOOL bReference)
+{
+	UNREFERENCED_PARAMETER(doc);
+	UNREFERENCED_PARAMETER(filename);
+	UNREFERENCED_PARAMETER(bMerge);
+	UNREFERENCED_PARAMETER(bReference);
+	Defaults(true);
+}
+
+void COspreyEventWatcher::OnBeginSaveDocument(CRhinoDoc& doc, const wchar_t* filename, BOOL bExportSelected)
 {
 	UNREFERENCED_PARAMETER(doc);
 	UNREFERENCED_PARAMETER(filename);
 	UNREFERENCED_PARAMETER(bExportSelected);
 }
 
-void COspreyEventWatcher::OnEndSaveDocument( CRhinoDoc& doc, const wchar_t* filename, BOOL bExportSelected )
+void COspreyEventWatcher::OnEndSaveDocument(CRhinoDoc& doc, const wchar_t* filename, BOOL bExportSelected)
 {
 	UNREFERENCED_PARAMETER(doc);
 	UNREFERENCED_PARAMETER(filename);
@@ -188,11 +188,11 @@ void COspreyEventWatcher::OnEndCommand(
 	UNREFERENCED_PARAMETER(rc);
 }
 
-void COspreyEventWatcher::OnAddObject( CRhinoDoc& doc, CRhinoObject& object )
+void COspreyEventWatcher::OnAddObject(CRhinoDoc& doc, CRhinoObject& object)
 {
 	UNREFERENCED_PARAMETER(doc);
 
-	if( object.IsMeshable(ON::render_mesh) )
+	if (object.IsMeshable(ON::render_mesh))
 		m_render_mesh_added = true;
 }
 
@@ -204,7 +204,7 @@ void COspreyEventWatcher::OnDeleteObject(CRhinoDoc& doc, CRhinoObject& object)
 		m_render_mesh_deleted = true;
 }
 
-void COspreyEventWatcher::OnReplaceObject( CRhinoDoc& doc, CRhinoObject& old_object, CRhinoObject& new_object )
+void COspreyEventWatcher::OnReplaceObject(CRhinoDoc& doc, CRhinoObject& old_object, CRhinoObject& new_object)
 {
 	UNREFERENCED_PARAMETER(doc);
 
@@ -241,7 +241,7 @@ void COspreyEventWatcher::OnReplaceObject( CRhinoDoc& doc, CRhinoObject& old_obj
 	}
 }
 
-void COspreyEventWatcher::OnUnDeleteObject( CRhinoDoc& doc, CRhinoObject& object )
+void COspreyEventWatcher::OnUnDeleteObject(CRhinoDoc& doc, CRhinoObject& object)
 {
 	UNREFERENCED_PARAMETER(doc);
 
@@ -249,25 +249,25 @@ void COspreyEventWatcher::OnUnDeleteObject( CRhinoDoc& doc, CRhinoObject& object
 		m_render_mesh_added = true;
 }
 
-void COspreyEventWatcher::OnPurgeObject( CRhinoDoc& doc, CRhinoObject& object)
+void COspreyEventWatcher::OnPurgeObject(CRhinoDoc& doc, CRhinoObject& object)
 {
 	UNREFERENCED_PARAMETER(doc);
 	UNREFERENCED_PARAMETER(object);
 }
 
-void COspreyEventWatcher::OnSelectObject( CRhinoDoc& doc, const CRhinoObject& object)
+void COspreyEventWatcher::OnSelectObject(CRhinoDoc& doc, const CRhinoObject& object)
 {
 	UNREFERENCED_PARAMETER(doc);
 	UNREFERENCED_PARAMETER(object);
 }
 
-void COspreyEventWatcher::OnDeselectObject( CRhinoDoc& doc, const CRhinoObject& object)
+void COspreyEventWatcher::OnDeselectObject(CRhinoDoc& doc, const CRhinoObject& object)
 {
 	UNREFERENCED_PARAMETER(doc);
 	UNREFERENCED_PARAMETER(object);
 }
 
-void COspreyEventWatcher::OnDeselectAllObjects( CRhinoDoc& doc, int count)
+void COspreyEventWatcher::OnDeselectAllObjects(CRhinoDoc& doc, int count)
 {
 	UNREFERENCED_PARAMETER(doc);
 	UNREFERENCED_PARAMETER(count);

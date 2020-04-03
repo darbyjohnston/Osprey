@@ -92,6 +92,7 @@ BOOL COspreyPlugIn::OnLoadPlugIn()
 	ospDeviceSetParam(device, "logLevel", OSPDataType::OSP_STRING, "debug");
 	ospDeviceCommit(device);
 	ospDeviceRelease(device);
+    _render = Osprey::Render::create();
 
 	// Initialize RDK plugin.
 	m_pRdkPlugIn = new OspreyRdkPlugIn(_settings);
@@ -133,12 +134,27 @@ void COspreyPlugIn::OnUnloadPlugIn()
 
 CRhinoCommand::result COspreyPlugIn::Render(const CRhinoCommandContext& context, bool bPreview)
 {
-	const auto pDoc = context.Document();
-	if (nullptr == pDoc)
+	const auto rhinoDoc = context.Document();
+	if (nullptr == rhinoDoc)
 		return CRhinoCommand::failure; 
 
-	OspreySdkRender render(_settings, context, *this, L"Osprey", IDI_RENDER, bPreview);
-	const auto size = render.RenderSize(*pDoc, true);
+    const auto& view = RhinoApp().ActiveView()->ActiveViewport().View();
+    const std::string rendererName = Osprey::getRendererValues()[static_cast<size_t>(_settings->observeRenderer()->get())];
+    _changeQueue.reset(new Osprey::ChangeQueue(*rhinoDoc, view));
+    _changeQueue->setWorldBBox(rhinoDoc->BoundingBox(false, true, true));
+    _changeQueue->setRendererName(rendererName);
+    _changeQueue->CreateWorld();
+
+    _render->setRendererName(rendererName);
+    _render->setPasses(Osprey::getPassesValues()[static_cast<size_t>(_settings->observePasses()->get())]);
+    _render->setPixelSamples(Osprey::getPixelSamplesValues()[static_cast<size_t>(_settings->observePixelSamples()->get())]);
+    _render->setAOSamples(Osprey::getAOSamplesValues()[static_cast<size_t>(_settings->observeAOSamples()->get())]);
+    _render->setDenoiserFound(_settings->observeDenoiserFound()->get());
+    _render->setDenoiserEnabled(_settings->observeDenoiserEnabled()->get());
+    _render->setWorld(_changeQueue->getWorld(), _changeQueue->getCamera());
+
+	OspreySdkRender render(_changeQueue, _render, context, *this, L"Osprey", IDI_RENDER);
+	const auto size = render.RenderSize(*rhinoDoc, true);
 	if (CRhinoSdkRender::render_ok != render.Render(size))
 		return CRhinoCommand::failure;
 
@@ -147,26 +163,38 @@ CRhinoCommand::result COspreyPlugIn::Render(const CRhinoCommandContext& context,
 
 CRhinoCommand::result COspreyPlugIn::RenderWindow(
 	const CRhinoCommandContext& context,
-	bool render_preview,
+	bool,
 	CRhinoView* view,
 	const LPRECT rect,
 	bool bInWindow,
-	bool bBlowUp)
+	bool)
 {
-	UNREFERENCED_PARAMETER(bBlowUp);
+    const auto rhinoDoc = context.Document();
+    if (nullptr == rhinoDoc)
+        return CRhinoCommand::failure;
 
-	OspreySdkRender render(_settings, context, *this, L"Osprey", IDI_RENDER, render_preview);
+    const std::string rendererName = Osprey::getRendererValues()[static_cast<size_t>(_settings->observeRenderer()->get())];
+    _changeQueue.reset(new Osprey::ChangeQueue(*rhinoDoc, view->ActiveViewport().View()));
+    _changeQueue->setWorldBBox(rhinoDoc->BoundingBox(false, true, true));
+    _changeQueue->setRendererName(rendererName);
+    _changeQueue->CreateWorld();
+
+    _render->setRendererName(rendererName);
+    _render->setPasses(Osprey::getPassesValues()[static_cast<size_t>(_settings->observePasses()->get())]);
+    _render->setPixelSamples(Osprey::getPixelSamplesValues()[static_cast<size_t>(_settings->observePixelSamples()->get())]);
+    _render->setAOSamples(Osprey::getAOSamplesValues()[static_cast<size_t>(_settings->observeAOSamples()->get())]);
+    _render->setDenoiserFound(_settings->observeDenoiserFound()->get());
+    _render->setDenoiserEnabled(_settings->observeDenoiserEnabled()->get());
+    _render->setWorld(_changeQueue->getWorld(), _changeQueue->getCamera());
+
+	OspreySdkRender render(_changeQueue, _render, context, *this, L"Osprey", IDI_RENDER);
 	if (CRhinoSdkRender::render_ok == render.RenderWindow(view, rect, bInWindow))
 		return CRhinoCommand::success;
-
 	return CRhinoCommand::failure;
 }
 
-CRhinoCommand::result COspreyPlugIn::RenderQuiet(const CRhinoCommandContext& context, bool bPreview)
+CRhinoCommand::result COspreyPlugIn::RenderQuiet(const CRhinoCommandContext&, bool)
 {
-	UNREFERENCED_PARAMETER(context);
-	UNREFERENCED_PARAMETER(bPreview);
-
 	return CRhinoCommand::failure;
 }
 
