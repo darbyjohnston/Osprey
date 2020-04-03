@@ -45,7 +45,6 @@ Completed or in-progress:
 
 TODO:
 * Lights - https://github.com/darbyjohnston/Osprey/issues/2
-* Create render meshes - https://github.com/darbyjohnston/Osprey/issues/3
 * Backgrounds - https://github.com/darbyjohnston/Osprey/issues/4
 * Environments - https://github.com/darbyjohnston/Osprey/issues/5
 * Points - https://github.com/darbyjohnston/Osprey/issues/7
