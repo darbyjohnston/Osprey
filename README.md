@@ -16,8 +16,8 @@ Intel OSPRay: https://www.ospray.org/
 
 Usage
 =====
-Download the 0.1.0 release for Rhino 6 on Windows:
-https://github.com/darbyjohnston/Osprey/releases/download/v0.1.0/Osprey-0.1-rh6-win-x64.rhi
+Download the 0.2.0 release for Rhino 6 on Windows:
+https://github.com/darbyjohnston/Osprey/releases/download/v0.2.0/Osprey-0.1-rh6-win-x64.rhi
 
 Install the plugin by starting Rhino and dragging and dropping the plugin file
 onto the Rhino application.
@@ -52,7 +52,6 @@ TODO:
 * PBR materials - https://github.com/darbyjohnston/Osprey/issues/9
 * Textures - https://github.com/darbyjohnston/Osprey/issues/10
 * Async rendering - https://github.com/darbyjohnston/Osprey/issues/11
-* Interactive viewport rendering - https://github.com/darbyjohnston/Osprey/issues/12
 * Add macOS support - https://github.com/darbyjohnston/Osprey/issues/13
 * Previews - https://github.com/darbyjohnston/Osprey/issues/15
 * Continuous integration builds - https://github.com/darbyjohnston/Osprey/issues/16
@@ -236,8 +235,8 @@ configuration you will need to reinstall the plugin.
 #### Packaging
 Tag the git repository:
 ```
-> git tag -a v0.1.0 -m "Version 0.1.0"
-> git push origin v0.1.0
+> git tag -a v0.2.0 -m "Version 0.2.0"
+> git push origin v0.2.0
 ```
 
 A RHI package is generated automatically as part of the project's build events.
