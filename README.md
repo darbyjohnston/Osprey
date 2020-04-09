@@ -51,6 +51,7 @@ Completed or in-progress:
 * Ortho cameras
 * Sun
 * Render settings UI
+* Viewport rendering
 
 TODO:
 * Lights - https://github.com/darbyjohnston/Osprey/issues/2
