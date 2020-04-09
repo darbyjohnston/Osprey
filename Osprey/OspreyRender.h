@@ -19,64 +19,88 @@ namespace Osprey
 		//! \name Settings
 		///@{
 
-		const std::string& getRendererName() const;
-		size_t getPasses() const;
-		size_t getPixelSamples() const;
-		size_t getAOSamples() const;
-		bool isDenoiserFound() const;
-		bool isDenoiserEnabled() const;
-
+        //! Set the renderer name (e.g., "pathtracer", "scivis", "debug").
 		void setRendererName(const std::string&);
-		void setPasses(size_t);
+
+        //! Set the number of low resolution preview passes.
+        void setPreviewPasses(size_t);
+
+        //! Set the number of pixel samples.
 		void setPixelSamples(size_t);
+
+        //! Set the number of ambient occlusion samples.
 		void setAOSamples(size_t);
+
+        //! Set whether the denoiser module was found.
 		void setDenoiserFound(bool);
+
+        //! Set whether the denoise is enabled.
 		void setDenoiserEnabled(bool);
+
+        //! Set whether the tone mapper is enabled.
+        void setToneMapperEnabled(bool);
+
+        //! Set the tone mapper exposure.
+        void setToneMapperExposure(float);
+
+        //! Set whether to flip the y-axis of the frame buffer.
+        void setFlipY(bool);
 
 		///@}
 
 		//! \name Rendering
 		///@{
 
-		//! Set the render size.
-		//! \param Size of the render window.
-		//! \param Rectangle within the window to render.
-		void setRenderSize(
-			const ospcommon::math::vec2i& window,
-			const ospcommon::math::box2i& rectangle);
-
-		//! Convert the Rhino document to OSPRay.
-		//void convert(CRhinoDoc*);
-		void setWorld(
-			const ospray::cpp::World&,
-			const ospray::cpp::Camera&);
-
 		//! Initialize rendering.
-		void initRender(IRhRdkRenderWindow&);
+        //! \param Size of the render window.
+        //! \param Rectangle within the window to render.
+        void initRender(
+            const ospcommon::math::vec2i& window,
+            const ospcommon::math::box2i& rectangle);
 
 		//! Render a pass.
-		void renderPass(size_t, IRhRdkRenderWindow&);
+		void renderPass(
+            size_t pass,
+            const std::shared_ptr<ospray::cpp::World>&,
+            const std::shared_ptr<ospray::cpp::Camera>&,
+            IRhRdkRenderWindow&);
 
 		///@}
 
 	private:
-        void _initFrameBuffer(const ospcommon::math::vec2i&);
+        void _initFrameBuffers(const ospcommon::math::vec2i&);
+
+        static void _scale(
+            const float* in,
+            const ospcommon::math::vec2i& inSize,
+            float* out,
+            const ospcommon::math::vec2i& outSize,
+            int scale,
+            bool flipY);
+
+        static void _flipImage(
+            const float* in,
+            float* out,
+            const ospcommon::math::vec2i& size);
 
 		std::string _rendererName = "scivis";
-		size_t _passes = 8;
+        size_t _previewPasses = 0;
 		size_t _pixelSamples = 1;
-		size_t _aoSamples = 16;
+		size_t _aoSamples = 1;
 		bool _denoiserFound = false;
 		bool _denoiserEnabled = true;
+        bool _toneMapperEnabled = false;
+        float _toneMapperExposure = 1.F;
+        bool _flipY = false;
 
 		ospcommon::math::vec2i _windowSize;
 		ospcommon::math::box2i _renderRect;
         ospcommon::math::vec2i _frameBufferSize;
 
-		ospray::cpp::World _world;
-		ospray::cpp::Camera _camera;
 		ospray::cpp::Renderer _renderer;
-		ospray::cpp::FrameBuffer _frameBuffer;
+		std::vector<ospray::cpp::FrameBuffer> _frameBuffers;
+        std::vector<ospcommon::math::vec2i> _frameBuffersSizes;
+        std::vector<float> _frameBufferTemp;
 	};
 
 } // namespace Osprey

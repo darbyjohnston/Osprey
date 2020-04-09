@@ -79,13 +79,16 @@
 #if defined(max)
 #undef max
 #endif
+#include "embree3/rtcore.h"
 #include "ospray/ospray_cpp.h"
 
 // Osprey
+#include <atomic>
 #include <functional>
 #include <list>
 #include <map>
 #include <memory>
+#include <mutex>
 #include <string>
 #include <vector>
 

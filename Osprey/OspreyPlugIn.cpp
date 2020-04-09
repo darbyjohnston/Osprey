@@ -3,11 +3,13 @@
 
 #include "StdAfx.h"
 #include "rhinoSdkPlugInDeclare.h"
+#include "OspreyDisplayMode.h"
 #include "OspreyPlugIn.h"
-#include "Resource.h"
 #include "OspreyRdkPlugIn.h"
 #include "OspreySdkRender.h"
+#include "OspreySettings.h"
 #include "OspreyUtil.h"
+#include "Resource.h"
 
 // The plug-in object must be constructed before any plug-in classes derived
 // from CRhinoCommand. The #pragma init_seg(lib) ensures that this happens.
@@ -65,7 +67,11 @@ BOOL COspreyPlugIn::OnLoadPlugIn()
 {
     ASSERT(RhRdkIsAvailable());
 
-    // Initialize OSPRay.
+	ON_wString str;
+	str.Format(L"Loading %s, version %s\n", PlugInName(), PlugInVersion());
+	RhinoApp().Print(str);
+	
+	// Initialize OSPRay.
     ON_wString pluginFolder;
     GetPlugInFolder(pluginFolder);
     size_t envSize = 0;
@@ -92,11 +98,9 @@ BOOL COspreyPlugIn::OnLoadPlugIn()
 	ospDeviceSetParam(device, "logLevel", OSPDataType::OSP_STRING, "debug");
 	ospDeviceCommit(device);
 	ospDeviceRelease(device);
-    _render = Osprey::Render::create();
 
 	// Initialize RDK plugin.
 	m_pRdkPlugIn = new OspreyRdkPlugIn(_settings);
-	ON_wString str;
 	if (!m_pRdkPlugIn->Initialize())
 	{
 		delete m_pRdkPlugIn;
@@ -106,15 +110,44 @@ BOOL COspreyPlugIn::OnLoadPlugIn()
 		return FALSE;
 	}
 
-	str.Format(L"Loading %s, version %s\n", PlugInName(), PlugInVersion());
-	RhinoApp().Print(str);
+	// Initialize the display mode.
+	RhRdk::Realtime::DisplayMode::Factory::Register(std::make_unique<Osprey::DisplayModeFactory>(_settings));
+	auto pDisplayAttrsMgrListDesc = CRhinoDisplayAttrsMgr::FindDisplayAttrsDesc(Osprey::DisplayMode::id);
+	if (0 == pDisplayAttrsMgrListDesc)
+	{
+		pDisplayAttrsMgrListDesc = CRhinoDisplayAttrsMgr::AppendNewEntry();
+		if (0 != pDisplayAttrsMgrListDesc && 0 != pDisplayAttrsMgrListDesc->m_pAttrs)
+		{
+			pDisplayAttrsMgrListDesc->m_bAddToMenu = true;
+			pDisplayAttrsMgrListDesc->m_pAttrs->SetUuid(Osprey::DisplayMode::id);
+			pDisplayAttrsMgrListDesc->m_pAttrs->SetName(PlugInName());
+			pDisplayAttrsMgrListDesc->m_pAttrs->SetRealtimeDisplayId(Osprey::DisplayMode::id);
+			pDisplayAttrsMgrListDesc->m_pAttrs->SetPipeline(&ON_CLASS_RTTI(CRhinoDisplayPipeline_OGL));
 
+            pDisplayAttrsMgrListDesc->m_pAttrs->m_bShowIsocurves = false;
+            pDisplayAttrsMgrListDesc->m_pAttrs->m_bShowNakedEdges = false;
+            pDisplayAttrsMgrListDesc->m_pAttrs->m_bShowEdgeEndpoints = false;
+            pDisplayAttrsMgrListDesc->m_pAttrs->m_bShowNonmanifoldEdges = false;
+            pDisplayAttrsMgrListDesc->m_pAttrs->m_bShowMeshWires = false;
+            pDisplayAttrsMgrListDesc->m_pAttrs->m_bShowMeshVertices = false;
+            pDisplayAttrsMgrListDesc->m_pAttrs->m_bShowMeshEdges = false;
+            pDisplayAttrsMgrListDesc->m_pAttrs->m_bShowMeshNakedEdges = false;
+            pDisplayAttrsMgrListDesc->m_pAttrs->m_bShowMeshNonmanifoldEdges = false;
+            //pDisplayAttrsMgrListDesc->m_pAttrs->m_linearWorkflowUsage = CDisplayPipelineAttributes::LinearWorkflowUsages::Custom;
+            //pDisplayAttrsMgrListDesc->m_pAttrs->m_customLinearWorkflowSettings.SetPostProcessGamma(2.2F);
+
+			CRhinoDisplayAttrsMgr::SaveProfile(RhinoApp().ProfileContext());
+		}
+	}
+
+	// Initialize the event watcher.
 	m_event_watcher.Register();
 	m_event_watcher.Enable(TRUE);
-
 	CRhinoDoc* doc = RhinoApp().ActiveDoc();
 	if (doc)
+	{
 		m_event_watcher.OnNewDocument(*doc);
+	}
 
 	return TRUE;
 }
@@ -136,26 +169,11 @@ CRhinoCommand::result COspreyPlugIn::Render(const CRhinoCommandContext& context,
 {
 	const auto rhinoDoc = context.Document();
 	if (nullptr == rhinoDoc)
-		return CRhinoCommand::failure; 
+		return CRhinoCommand::failure;
 
-    const auto& view = RhinoApp().ActiveView()->ActiveViewport().View();
-    const std::string rendererName = Osprey::getRendererValues()[static_cast<size_t>(_settings->observeRenderer()->get())];
-    _changeQueue.reset(new Osprey::ChangeQueue(*rhinoDoc, view));
-    _changeQueue->setWorldBBox(rhinoDoc->BoundingBox(false, true, true));
-    _changeQueue->setRendererName(rendererName);
-    _changeQueue->CreateWorld();
-
-    _render->setRendererName(rendererName);
-    _render->setPasses(Osprey::getPassesValues()[static_cast<size_t>(_settings->observePasses()->get())]);
-    _render->setPixelSamples(Osprey::getPixelSamplesValues()[static_cast<size_t>(_settings->observePixelSamples()->get())]);
-    _render->setAOSamples(Osprey::getAOSamplesValues()[static_cast<size_t>(_settings->observeAOSamples()->get())]);
-    _render->setDenoiserFound(_settings->observeDenoiserFound()->get());
-    _render->setDenoiserEnabled(_settings->observeDenoiserEnabled()->get());
-    _render->setWorld(_changeQueue->getWorld(), _changeQueue->getCamera());
-
-	OspreySdkRender render(_changeQueue, _render, context, *this, L"Osprey", IDI_RENDER);
-	const auto size = render.RenderSize(*rhinoDoc, true);
-	if (CRhinoSdkRender::render_ok != render.Render(size))
+	OspreySdkRender sdkRender(_settings, context, *this, L"Osprey", IDI_RENDER);
+	const auto size = sdkRender.RenderSize(*rhinoDoc, true);
+	if (CRhinoSdkRender::render_ok != sdkRender.Render(size))
 		return CRhinoCommand::failure;
 
 	return CRhinoCommand::success;
@@ -173,22 +191,8 @@ CRhinoCommand::result COspreyPlugIn::RenderWindow(
     if (nullptr == rhinoDoc)
         return CRhinoCommand::failure;
 
-    const std::string rendererName = Osprey::getRendererValues()[static_cast<size_t>(_settings->observeRenderer()->get())];
-    _changeQueue.reset(new Osprey::ChangeQueue(*rhinoDoc, view->ActiveViewport().View()));
-    _changeQueue->setWorldBBox(rhinoDoc->BoundingBox(false, true, true));
-    _changeQueue->setRendererName(rendererName);
-    _changeQueue->CreateWorld();
-
-    _render->setRendererName(rendererName);
-    _render->setPasses(Osprey::getPassesValues()[static_cast<size_t>(_settings->observePasses()->get())]);
-    _render->setPixelSamples(Osprey::getPixelSamplesValues()[static_cast<size_t>(_settings->observePixelSamples()->get())]);
-    _render->setAOSamples(Osprey::getAOSamplesValues()[static_cast<size_t>(_settings->observeAOSamples()->get())]);
-    _render->setDenoiserFound(_settings->observeDenoiserFound()->get());
-    _render->setDenoiserEnabled(_settings->observeDenoiserEnabled()->get());
-    _render->setWorld(_changeQueue->getWorld(), _changeQueue->getCamera());
-
-	OspreySdkRender render(_changeQueue, _render, context, *this, L"Osprey", IDI_RENDER);
-	if (CRhinoSdkRender::render_ok == render.RenderWindow(view, rect, bInWindow))
+	OspreySdkRender sdkRender(_settings, context, *this, L"Osprey", IDI_RENDER);
+	if (CRhinoSdkRender::render_ok == sdkRender.RenderWindow(view, rect, bInWindow))
 		return CRhinoCommand::success;
 	return CRhinoCommand::failure;
 }

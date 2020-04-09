@@ -1,5 +1,9 @@
+// SPDX-License-Identifier: BSD-3-Clause
+// Copyright (c) 2020 Darby Johnston, All rights reserved
+
 #include "stdafx.h"
 #include "OspreyChangeQueue.h"
+#include "OspreyDisplayMode.h"
 #include "OspreyUtil.h"
 
 namespace Osprey
@@ -23,28 +27,27 @@ namespace Osprey
 
     } // namespace
 
-	ChangeQueue::ChangeQueue(const CRhinoDoc& rhinoDoc, const ON_3dmView& onView) :
-		RhRdk::Realtime::ChangeQueue(rhinoDoc, ON_nil_uuid, onView, nullptr, false, false)
+	ChangeQueue::ChangeQueue(
+        const CRhinoDoc& rhinoDoc,
+        const ON_3dmView& onView,
+        const std::shared_ptr<Data>& data) :
+		RhRdk::Realtime::ChangeQueue(rhinoDoc, ON_nil_uuid, onView, nullptr, false, true),
+        _rhinoDoc(rhinoDoc),
+        _data(data)
 	{}
 
-	const ospray::cpp::World& ChangeQueue::getWorld() const
-	{
-		return _world;
-	}
+    ChangeQueue::~ChangeQueue()
+    {}
 
-	const ospray::cpp::Camera& ChangeQueue::getCamera() const
-	{
-		return _camera;
-	}
-
-    void ChangeQueue::setWorldBBox(const ON_BoundingBox& value)
+    void ChangeQueue::setRendererName(const std::string& value, bool supportsMaterials)
     {
-        _worldBBox = value;
-    }
-
-    void ChangeQueue::setRendererName(const std::string& value)
-    {
+        if (value == _rendererName && supportsMaterials == _supportsMaterials)
+            return;
         _rendererName = value;
+        _supportsMaterials = supportsMaterials;
+        _materials.clear();
+        _instances.clear();
+        _groundPlane.reset();
     }
 
 	eRhRdkBakingFunctions ChangeQueue::BakeFor() const
@@ -67,35 +70,35 @@ namespace Osprey
         const float cameraNear = vp.PerspectiveMinNearDist();
         if (vp.IsPerspectiveProjection())
         {
-            that->_camera = ospray::cpp::Camera("perspective");
+            that->_data->camera = std::make_shared<ospray::cpp::Camera>("perspective");
 
-            _camera.setParam("position", cameraPos);
-            _camera.setParam("direction", cameraDir);
-            _camera.setParam("up", cameraUp);
-            _camera.setParam("nearClip", cameraNear);
+            _data->camera->setParam("position", cameraPos);
+            _data->camera->setParam("direction", cameraDir);
+            _data->camera->setParam("up", cameraUp);
+            _data->camera->setParam("nearClip", cameraNear);
 
             double halfDiagonalAngle = 0.0;
             double halfVerticalAngle = 0.0;
             double halfHorizontalAngle = 0.0;
             vp.GetCameraAngle(&halfDiagonalAngle, &halfVerticalAngle, &halfHorizontalAngle);
             const float cameraFovY = static_cast<float>(halfVerticalAngle * 2.0 / double(ospcommon::math::two_pi) * 360.0);
-            _camera.setParam("fovy", cameraFovY);
+            _data->camera->setParam("fovy", cameraFovY);
 
-            _camera.commit();
+            _data->camera->commit();
         }
         else if (vp.IsParallelProjection())
         {
-            that->_camera = ospray::cpp::Camera("orthographic");
+            that->_data->camera = std::make_shared<ospray::cpp::Camera>("orthographic");
 
-            _camera.setParam("position", cameraPos);
-            _camera.setParam("direction", cameraDir);
-            _camera.setParam("up", cameraUp);
-            _camera.setParam("nearClip", cameraNear);
+            _data->camera->setParam("position", cameraPos);
+            _data->camera->setParam("direction", cameraDir);
+            _data->camera->setParam("up", cameraUp);
+            _data->camera->setParam("nearClip", cameraNear);
 
             const float height = static_cast<float>(vp.FrustumHeight());
-            _camera.setParam("height", height);
+            _data->camera->setParam("height", height);
 
-            _camera.commit();
+            _data->camera->commit();
         }
 	}
 
@@ -121,10 +124,10 @@ namespace Osprey
             const int rdkMeshesCount = rdkMeshes.Count();
             for (int k = 0; k < rdkMeshesCount; ++k)
             {
-                ospray::cpp::Geometry geometry;
+                std::shared_ptr<ospray::cpp::Geometry> geometry;
                 if (rdkMeshes[k]->FaceCount() > 0)
                 {
-                    geometry = ospray::cpp::Geometry("mesh");
+                    geometry = std::make_shared<ospray::cpp::Geometry>("mesh");
                     _convertMesh(rdkMeshes[k], geometry);
                 }
                 geometryList.emplace_back(geometry);
@@ -152,8 +155,8 @@ namespace Osprey
             const auto j = _instances.find(rdkInstanceID);
             if (j != _instances.end())
             {
-                j->second.setParam("xfm", fromRhino(rdkInstance->InstanceXform()));
-                j->second.commit();
+                j->second->setParam("xfm", fromRhino(rdkInstance->InstanceXform()));
+                j->second->commit();
             }
             else
             {
@@ -167,17 +170,20 @@ namespace Osprey
                         const auto& geometry = k->second[rdkMeshIndex];
                         if (geometry)
                         {
-                            ospray::cpp::GeometricModel model(geometry);
-                            model.setParam("material", that->_getMaterial(rdkInstance->MaterialId()));
+                            ospray::cpp::GeometricModel model(*geometry);
+                            if (auto material = that->_getMaterial(rdkInstance->MaterialId()))
+                            {
+                                model.setParam("material", *material);
+                            }
                             model.commit();
 
                             ospray::cpp::Group group;
                             group.setParam("geometry", ospray::cpp::Data(model));
                             group.commit();
 
-                            ospray::cpp::Instance instance(group);
-                            instance.setParam("xfm", fromRhino(rdkInstance->InstanceXform()));
-                            instance.commit();
+                            auto instance = std::make_shared<ospray::cpp::Instance>(group);
+                            instance->setParam("xfm", fromRhino(rdkInstance->InstanceXform()));
+                            instance->commit();
                             that->_instances[rdkInstanceID] = instance;
                         }
                     }
@@ -191,16 +197,15 @@ namespace Osprey
         auto that = const_cast<ChangeQueue*>(this);
         if (rhinoSun.IsEnabled())
         {
-            ospray::cpp::Light light("distant");
+            that->_sun = std::make_shared<ospray::cpp::Light>("distant");
 
-            light.setParam("direction", fromRhino(rhinoSun.Direction()));
-            light.setParam("angularDiameter", sunAngularDiameter);
+            _sun->setParam("direction", fromRhino(rhinoSun.Direction()));
+            _sun->setParam("angularDiameter", sunAngularDiameter);
 
-            light.setParam("color", static_cast<float>(rhinoSun.Diffuse()));
-            light.setParam("intensity", static_cast<float>(rhinoSun.Intensity()) * lightIntensityMul);
+            _sun->setParam("color", static_cast<float>(rhinoSun.Diffuse()));
+            _sun->setParam("intensity", static_cast<float>(rhinoSun.Intensity()) * lightIntensityMul);
 
-            light.commit();
-            that->_lights.emplace_back(light);
+            _sun->commit();
         }
 	}
 
@@ -209,11 +214,12 @@ namespace Osprey
         auto that = const_cast<ChangeQueue*>(this);
         if (rhinoSkylight.On())
         {
-            ospray::cpp::Light light("ambient");
+            that->_ambient = std::make_shared<ospray::cpp::Light>("ambient");
+
             const float shadowIntensity = rhinoSkylight.ShadowIntensity();
-            light.setParam("intensity", ambientIntensity);
-            light.commit();
-            that->_lights.emplace_back(light);
+            _ambient->setParam("intensity", ambientIntensity);
+
+            _ambient->commit();
         }
 	}
 
@@ -282,7 +288,7 @@ namespace Osprey
                     light.setParam("intensity", static_cast<float>(onLight.Intensity()) * lightIntensityMul);
 
                     light.commit();
-                    that->_lights.emplace_back(light);
+                    that->_lights[onLight.m_light_id] = light;
                 }
             }
         }
@@ -340,15 +346,18 @@ namespace Osprey
             mesh.commit();
 
             ospray::cpp::GeometricModel model(mesh);
-            model.setParam("material", that->_getMaterial(rhinoGroundPlane.MaterialId()));
+            if (auto material = that->_getMaterial(rhinoGroundPlane.MaterialId()))
+            {
+                model.setParam("material", *material);
+            }
             model.commit();
 
             ospray::cpp::Group group;
             group.setParam("geometry", ospray::cpp::Data(model));
             group.commit();
 
-            that->_groundPlane = ospray::cpp::Instance(group);
-            _groundPlane.commit();
+            that->_groundPlane = std::make_shared<ospray::cpp::Instance>(group);
+            _groundPlane->commit();
         }
     }
 
@@ -356,60 +365,82 @@ namespace Osprey
     {}
 
     void ChangeQueue::NotifyEndUpdates() const
+    {
+        auto that = const_cast<ChangeQueue*>(this);
+        that->_worldBBox = _rhinoDoc.BoundingBox(false, true, true);
+        {
+            std::lock_guard<std::mutex> lock(that->_data->mutex);
+            that->_data->updates = true;
+        }
+    }
+
+    void ChangeQueue::NotifyDynamicUpdatesAreAvailable() const
     {}
 
     void ChangeQueue::Flush(bool bApplyChanges)
     {
         RhRdk::Realtime::ChangeQueue::Flush(bApplyChanges);
-        auto that = const_cast<ChangeQueue*>(this);
 
         std::vector<ospray::cpp::Instance> instances;
         for (const auto& i : _instances)
         {
-            instances.push_back(i.second);
+            instances.push_back(*i.second);
         }
         if (_groundPlane)
         {
-            instances.push_back(_groundPlane);
+            instances.push_back(*_groundPlane);
         }
-
-        that->_world = ospray::cpp::World();
         if (instances.size())
         {
-            that->_world.setParam("instance", ospray::cpp::Data(instances));
+            _data->world->setParam("instance", ospray::cpp::Data(instances));
         }
-        if (_lights.size())
+
+        std::vector<ospray::cpp::Light> lights;
+        if (_sun)
         {
-            that->_world.setParam("light", ospray::cpp::Data(_lights));
+            lights.push_back(*_sun);
         }
-        that->_world.commit();
+        if (_ambient)
+        {
+            lights.push_back(*_ambient);
+        }
+        for (const auto& i : _lights)
+        {
+            lights.push_back(i.second);
+        }
+        if (lights.size())
+        {
+            _data->world->setParam("light", ospray::cpp::Data(lights));
+        }
+
+        _data->world->commit();
     }
 
-    void ChangeQueue::_convertMesh(const ON_Mesh* onMesh, ospray::cpp::Geometry& out)
+    void ChangeQueue::_convertMesh(const ON_Mesh* onMesh, const std::shared_ptr<ospray::cpp::Geometry>& out)
     {
         // Convert the mesh vertices. This assumes that the ON and ospcommon data types
         // have the same memory layout...
         if (onMesh->m_V.Count() > 0)
         {
-            out.setParam(
+            out->setParam(
                 "vertex.position",
                 ospray::cpp::Data(onMesh->m_V.Count(), reinterpret_cast<const ospcommon::math::vec3f*>(onMesh->m_V.First())));
         }
         if (onMesh->m_N.Count() > 0)
         {
-            out.setParam(
+            out->setParam(
                 "vertex.normal",
                 ospray::cpp::Data(onMesh->m_N.Count(), reinterpret_cast<const ospcommon::math::vec3f*>(onMesh->m_N.First())));
         }
         if (onMesh->m_T.Count() > 0)
         {
-            out.setParam(
+            out->setParam(
                 "vertex.texccord",
                 ospray::cpp::Data(onMesh->m_T.Count(), reinterpret_cast<const ospcommon::math::vec2f*>(onMesh->m_T.First())));
         }
         if (onMesh->m_C.Count() > 0)
         {
-            out.setParam(
+            out->setParam(
                 "vertex.color",
                 ospray::cpp::Data(onMesh->m_C.Count(), reinterpret_cast<const ospcommon::math::vec4f*>(onMesh->m_C.First())));
         }
@@ -432,34 +463,36 @@ namespace Osprey
         }
         if (indices.size())
         {
-            out.setParam("index", ospray::cpp::Data(indices));
+            out->setParam("index", ospray::cpp::Data(indices));
         }
 
-        out.commit();
+        out->commit();
     }
 
-    ospray::cpp::Material ChangeQueue::_getMaterial(ON__UINT32 value)
+    std::shared_ptr<ospray::cpp::Material> ChangeQueue::_getMaterial(ON__UINT32 value)
     {
-        ospray::cpp::Material out;
+        std::shared_ptr<ospray::cpp::Material> out;
         const auto rdkMaterial = MaterialFromId(value);
         const auto l = _materials.find(rdkMaterial);
         if (l != _materials.end())
         {
             out = l->second;
         }
-        else
+        else if (_supportsMaterials)
         {
-            auto onMaterial = rdkMaterial->SimulatedMaterial();
-            out = ospray::cpp::Material(_rendererName, "obj");
+            out = std::make_shared<ospray::cpp::Material>(_rendererName, "obj");
 
+            auto onMaterial = rdkMaterial->SimulatedMaterial();
             const ospcommon::math::vec3f kd = fromRhino(onMaterial.Diffuse());
-            out.setParam("kd", kd);
+            out->setParam("kd", kd);
+
             //const ospcommon::math::vec3f ks = fromRhino(onMaterial.Specular());
             //out.setParam("ks", ks);
-            out.setParam("ns", static_cast<float>(onMaterial.Shine() / ON_Material::MaxShine) * 100.F);
-            out.setParam("d", static_cast<float>(1.0 - onMaterial.Transparency()));
 
-            out.commit();
+            out->setParam("ns", static_cast<float>(onMaterial.Shine() / ON_Material::MaxShine) * 100.F);
+            out->setParam("d", static_cast<float>(1.0 - onMaterial.Transparency()));
+
+            out->commit();
             _materials[rdkMaterial] = out;
         }
         return out;

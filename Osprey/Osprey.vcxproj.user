@@ -12,4 +12,10 @@
     <LocalDebuggerEnvironment>PATH=%PATH%;%OSPRAY_INSTALL%\bin\intel64\vc14;%OSPRAY_INSTALL%\bin</LocalDebuggerEnvironment>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">
+    <LocalDebuggerCommand>$(RhinoExeDir)\Rhino.exe</LocalDebuggerCommand>
+    <LocalDebuggerWorkingDirectory>$(RhinoExeDir)</LocalDebuggerWorkingDirectory>
+    <LocalDebuggerEnvironment>PATH=%PATH%;%OSPRAY_INSTALL%\bin\intel64\vc14;%OSPRAY_INSTALL%\bin</LocalDebuggerEnvironment>
+    <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
+  </PropertyGroup>
 </Project>

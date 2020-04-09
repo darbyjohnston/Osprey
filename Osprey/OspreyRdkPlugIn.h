@@ -3,7 +3,11 @@
 
 #pragma once
 
-#include "OspreySettings.h"
+namespace Osprey
+{
+    class Settings;
+
+} // namespace Osprey
 
 class OspreyRdkPlugIn : public CRhRdkRenderPlugIn
 {

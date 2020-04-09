@@ -1,17 +1,24 @@
+// SPDX-License-Identifier: BSD-3-Clause
+// Copyright (c) 2020 Darby Johnston, All rights reserved
+
 #pragma once
+
+#include "OspreyUtil.h"
 
 namespace Osprey
 {
+    struct DisplayModeData;
+
     class ChangeQueue : public RhRdk::Realtime::ChangeQueue
     {
 	public:
-		ChangeQueue(const CRhinoDoc&, const ON_3dmView&);
+        ChangeQueue(
+            const CRhinoDoc&,
+            const ON_3dmView&,
+            const std::shared_ptr<Data>&);
+        ~ChangeQueue() override;
 
-		const ospray::cpp::World& getWorld() const;
-		const ospray::cpp::Camera& getCamera() const;
-
-        void setWorldBBox(const ON_BoundingBox&);
-        void setRendererName(const std::string&);
+        void setRendererName(const std::string&, bool supportsMaterials = true);
 
 		eRhRdkBakingFunctions BakeFor() const override;
 		bool ProvideOriginalObject() const override;
@@ -27,21 +34,25 @@ namespace Osprey
 
         void NotifyBeginUpdates() const override;
         void NotifyEndUpdates() const override;
+        void NotifyDynamicUpdatesAreAvailable() const override;
         void Flush(bool bApplyChanges = true) override;
 
     private:
-        static void _convertMesh(const ON_Mesh*, ospray::cpp::Geometry&);
-        ospray::cpp::Material _getMaterial(ON__UINT32);
+        static void _convertMesh(const ON_Mesh*, const std::shared_ptr<ospray::cpp::Geometry>&);
+        std::shared_ptr<ospray::cpp::Material> _getMaterial(ON__UINT32);
 
+        const CRhinoDoc& _rhinoDoc;
+        std::shared_ptr<Data> _data;
         ON_BoundingBox _worldBBox;
         std::string _rendererName;
-        std::map<ON_UUID, std::vector<ospray::cpp::Geometry> > _geometry;
-        std::map<const CRhRdkMaterial*, ospray::cpp::Material> _materials;
-        std::map<ON__UINT32, ospray::cpp::Instance> _instances;
-        std::vector<ospray::cpp::Light> _lights;
-        ospray::cpp::Instance _groundPlane;
-        ospray::cpp::World _world;
-		ospray::cpp::Camera _camera;
+        bool _supportsMaterials = true;
+        std::map<ON_UUID, std::vector<std::shared_ptr<ospray::cpp::Geometry> > > _geometry;
+        std::map<const CRhRdkMaterial*, std::shared_ptr<ospray::cpp::Material> > _materials;
+        std::map<ON__UINT32, std::shared_ptr<ospray::cpp::Instance> > _instances;
+        std::shared_ptr<ospray::cpp::Light>_sun;
+        std::shared_ptr<ospray::cpp::Light> _ambient;
+        std::map<ON_UUID, ospray::cpp::Light> _lights;
+        std::shared_ptr<ospray::cpp::Instance> _groundPlane;
     };
 
 } // Osprey

@@ -3,12 +3,15 @@
 
 #pragma once
 
-#include "OspreyChangeQueue.h"
 #include "OspreyEventWatcher.h"
-#include "OspreyRender.h"
-#include "OspreySettings.h"
 
 class OspreyRdkPlugIn;
+
+namespace Osprey
+{
+    class Settings;
+
+} // namespace Osprey
 
 class COspreyPlugIn : public CRhinoRenderPlugIn
 {
@@ -34,7 +37,7 @@ public:
 	BOOL SaveRenderedImage(ON_wString filename) override;
 	BOOL CloseRenderWindow() override;
 
-	CRhinoCommand::result RenderQuiet( const CRhinoCommandContext&, bool bPreview);
+	CRhinoCommand::result RenderQuiet(const CRhinoCommandContext&, bool bPreview);
 	BOOL SceneChanged() const;
 	void SetSceneChanged(BOOL bChanged);
 	BOOL LightingChanged() const;
@@ -43,8 +46,6 @@ public:
 
 private:
     std::shared_ptr<Osprey::Settings> _settings;
-    std::shared_ptr<Osprey::ChangeQueue> _changeQueue;
-    std::shared_ptr<Osprey::Render> _render;
     ON_wString m_plugin_version;
 	COspreyEventWatcher m_event_watcher;
 	OspreyRdkPlugIn* m_pRdkPlugIn;
