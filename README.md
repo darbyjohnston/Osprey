@@ -27,6 +27,15 @@ are some render settings in the "Osprey" section of the "Rendering" panel.
 
 ![Osprey Rhino 6 Rendering Panel](Images/Osprey_Rhino_6_Rendering_Panel.png)
 
+- Renderer - The name of the renderer to use.
+- Passes - The number of passes to render.
+- Preview passes - The number of low resolution preview passes to render before
+the main passes.
+- Pixel samples - The number of pixel samples.
+- AO samples - The number of ambient occlusion samples.
+- Denoiser - Enable denoiser post-processing.
+- Tone mapper - Enable tone mapping post-processing. If this is enabled the "Gamma" setting in "Dithering and Color Adjustment" should be set to 1.0.
+- Exposure - Exposure setting for the tone mapper.
 
 Features
 ========
