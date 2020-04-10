@@ -435,7 +435,7 @@ namespace Osprey
         if (onMesh->m_T.Count() > 0)
         {
             out->setParam(
-                "vertex.texccord",
+                "vertex.texcoord",
                 ospray::cpp::Data(onMesh->m_T.Count(), reinterpret_cast<const ospcommon::math::vec2f*>(onMesh->m_T.First())));
         }
         if (onMesh->m_C.Count() > 0)
