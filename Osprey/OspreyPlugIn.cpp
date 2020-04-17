@@ -85,7 +85,8 @@ BOOL COspreyPlugIn::OnLoadPlugIn()
         }
     }
 	_settings = Osprey::Settings::create();
-	_settings->setDenoiserFound(ospLoadModule("denoiser") == OSP_NO_ERROR);
+    const bool denoiserFound = ospLoadModule("denoiser") == OSP_NO_ERROR;
+    _settings->setDenoiserFound(denoiserFound);
     OSPError ospError = ospInit();
 	if (ospError != OSP_NO_ERROR)
 	{
