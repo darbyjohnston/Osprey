@@ -206,14 +206,14 @@ Requirements:
 Open a Visual Studio 2017 x64 Native Tools Command Prompt. Choose a directory
 and clone the repository:
 ```
-> git clone https://github.com/ospray/ospray.git
+> git clone -b https://github.com/ospray/ospray.git
 ```
 
 Create a directory for the build and run CMake:
 ```
 > mkdir ospray-build
 > cd ospray-build
-> cmake ../ospray/scripts/superbuild -G "NMake Makefiles" -DINSTALL_IN_SEPARATE_DIRECTORIES=FALSE -DBUILD_OIDN=TRUE -DBUILD_OIDN_FROM_SOURCE=TRUE
+> cmake ../ospray/scripts/superbuild -G "NMake Makefiles" -DINSTALL_IN_SEPARATE_DIRECTORIES=FALSE -DBUILD_OIDN=TRUE -DBUILD_OIDN_FROM_SOURCE=FALSE
 ```
 
 Start the build:
