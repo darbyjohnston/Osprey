@@ -13,9 +13,6 @@ namespace Osprey
         // Angular diameter of the sun.
         const float sunAngularDiameter = .53F;
 
-        // Ground plane scale factor.
-        const float groundPlaneScale = 10.F;
-
         // Curve radius.
         const float curveRadius = .05F;
 
@@ -303,49 +300,17 @@ namespace Osprey
         auto that = const_cast<ChangeQueue*>(this);
         if (rhinoGroundPlane.Enabled())
         {
-            ospray::cpp::Geometry mesh("mesh");
+            ospray::cpp::Geometry geom("plane");
 
-            const ON_3dPoint& onCenter = _worldBBox.Center();
-            const float size = static_cast<float>(_worldBBox.Diagonal().Length()) * groundPlaneScale;
-            const ospcommon::math::vec2f min =
-            {
-                static_cast<float>(onCenter.x) - size,
-                static_cast<float>(onCenter.y) - size
-            };
-            const ospcommon::math::vec2f max =
-            {
-                static_cast<float>(onCenter.x) + size,
-                static_cast<float>(onCenter.y) + size
-            };
             const float altitude = rhinoGroundPlane.Altitude();
-            const std::vector<ospcommon::math::vec3f> v =
+            const std::vector<ospcommon::math::vec4f> coefficients =
             {
-                ospcommon::math::vec3f{ min.x, min.y, altitude },
-                ospcommon::math::vec3f{ max.x, min.y, altitude },
-                ospcommon::math::vec3f{ max.x, max.y, altitude },
-                ospcommon::math::vec3f{ min.x, max.y, altitude }
+                ospcommon::math::vec4f(0.F, 0.F, 1.F, altitude)
             };
-            mesh.setParam("vertex.position", ospray::cpp::Data(v));
+            geom.setParam("plane.coefficients", ospray::cpp::Data(coefficients));
+            geom.commit();
 
-            const std::vector<ospcommon::math::vec3f> n =
-            {
-                ospcommon::math::vec3f{ 0.F, 0.F, 1.F },
-                ospcommon::math::vec3f{ 0.F, 0.F, 1.F },
-                ospcommon::math::vec3f{ 0.F, 0.F, 1.F },
-                ospcommon::math::vec3f{ 0.F, 0.F, 1.F }
-            };
-            mesh.setParam("vertex.normal", ospray::cpp::Data(n));
-
-            const std::vector<ospcommon::math::vec3ui> indices =
-            {
-                ospcommon::math::vec3ui(0, 1, 2),
-                ospcommon::math::vec3ui(2, 3, 0)
-            };
-            mesh.setParam("index", ospray::cpp::Data(indices));
-
-            mesh.commit();
-
-            ospray::cpp::GeometricModel model(mesh);
+            ospray::cpp::GeometricModel model(geom);
             if (auto material = that->_getMaterial(rhinoGroundPlane.MaterialId()))
             {
                 model.setParam("material", *material);
@@ -367,7 +332,6 @@ namespace Osprey
     void ChangeQueue::NotifyEndUpdates() const
     {
         auto that = const_cast<ChangeQueue*>(this);
-        that->_worldBBox = _rhinoDoc.BoundingBox(false, true, true);
         {
             std::lock_guard<std::mutex> lock(that->_data->mutex);
             that->_data->updates = true;

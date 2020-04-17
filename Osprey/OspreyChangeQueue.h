@@ -43,7 +43,6 @@ namespace Osprey
 
         const CRhinoDoc& _rhinoDoc;
         std::shared_ptr<Data> _data;
-        ON_BoundingBox _worldBBox;
         std::string _rendererName;
         bool _supportsMaterials = true;
         std::map<ON_UUID, std::vector<std::shared_ptr<ospray::cpp::Geometry> > > _geometry;
