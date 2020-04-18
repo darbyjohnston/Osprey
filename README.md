@@ -225,14 +225,14 @@ configuration you will need to reinstall the plugin.
 #### Packaging
 Tag the git repository:
 ```
-> git tag -a v0.2.0 -m "Version 0.2.0"
-> git push origin v0.2.0
+> git tag -a v0.3.0 -m "Version 0.3.0"
+> git push origin v0.3.0
 ```
 
 A RHI package is generated automatically as part of the project's build events.
 Add the package to the release page on GitHub.
 
-Bump the version number in the "Overview" section of this README.
+Bump the version numbers in this README.
 
 Bump the version number in Visual Studio:
 * Change the configuration to "Release"
