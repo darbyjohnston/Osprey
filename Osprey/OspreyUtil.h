@@ -12,6 +12,12 @@ namespace Osprey
 	void errorFunc(OSPError, const char*);
 	void messageFunc(const char*);
 
+    enum class CameraType
+    {
+        Perspective,
+        Orthographic
+    };
+
     struct Data
     {
         //! \todo Add a condition variable.
@@ -19,6 +25,7 @@ namespace Osprey
         bool updates;
         std::shared_ptr<ospray::cpp::World> world;
         std::shared_ptr<ospray::cpp::Camera> camera;
+        CameraType cameraType;
     };
 
 	ospcommon::math::vec2i fromRhino(const ON_2iSize&);

@@ -81,6 +81,7 @@
 #endif
 #include "embree3/rtcore.h"
 #include "ospray/ospray_cpp.h"
+#include "tbb/tbb.h"
 
 // Osprey
 #include <atomic>
