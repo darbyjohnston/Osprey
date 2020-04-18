@@ -310,7 +310,7 @@ namespace Osprey
         {
             const auto rhinoMaterial = rhinoMaterials[i];
             const auto rdkMaterial = MaterialFromId(rhinoMaterial->MaterialId());
-            const std::string instanceName = ON_String(rdkMaterial->InstanceName());
+            const std::wstring instanceName = rdkMaterial->InstanceName();
             const auto l = _materials.find(instanceName);
             if (l != _materials.end())
             {
@@ -537,7 +537,7 @@ namespace Osprey
     std::shared_ptr<ospray::cpp::Material> ChangeQueue::_getMaterial(const CRhRdkMaterial* rdkMaterial)
     {
         std::shared_ptr<ospray::cpp::Material> out;
-        const std::string instanceName = ON_String(rdkMaterial->InstanceName());
+        const std::wstring instanceName = rdkMaterial->InstanceName();
         const auto l = _materials.find(instanceName);
         if (l != _materials.end())
         {

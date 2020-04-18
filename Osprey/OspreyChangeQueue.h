@@ -50,7 +50,7 @@ namespace Osprey
         bool _supportsMaterials = true;
         std::map<ON_UUID, std::vector<std::shared_ptr<ospray::cpp::Geometry> > > _geometry;
         //! \todo Is the material instance name the right key to use?
-        std::map<const std::string, std::shared_ptr<ospray::cpp::Material> > _materials;
+        std::map<const std::wstring, std::shared_ptr<ospray::cpp::Material> > _materials;
         std::map<ON__UINT32, std::shared_ptr<ospray::cpp::Instance> > _instances;
         std::shared_ptr<ospray::cpp::Light>_sun;
         std::shared_ptr<ospray::cpp::Light> _ambient;
