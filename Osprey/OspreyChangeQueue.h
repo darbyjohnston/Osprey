@@ -29,6 +29,7 @@ namespace Osprey
 		void ApplySunChanges(const ON_Light&un) const override;
 		void ApplySkylightChanges(const Skylight&) const override;
 		void ApplyLightChanges(const ON_SimpleArray<const Light*>&) const override;
+        void ApplyMaterialChanges(const ON_SimpleArray<const Material*>&) const override;
 		void ApplyEnvironmentChanges(IRhRdkCurrentEnvironment::Usage) const override;
 		void ApplyGroundPlaneChanges(const GroundPlane&) const override;
 
@@ -39,18 +40,21 @@ namespace Osprey
 
     private:
         static void _convertMesh(const ON_Mesh*, const std::shared_ptr<ospray::cpp::Geometry>&);
-        std::shared_ptr<ospray::cpp::Material> _getMaterial(ON__UINT32);
+        static void _convertLight(const ON_Light&, const ON_Viewport&, const std::shared_ptr<ospray::cpp::Light>&);
+        static void _convertMaterial(const CRhRdkMaterial*, const std::shared_ptr<ospray::cpp::Material>&);
+        std::shared_ptr<ospray::cpp::Material> _getMaterial(const CRhRdkMaterial*);
 
         const CRhinoDoc& _rhinoDoc;
         std::shared_ptr<Data> _data;
         std::string _rendererName;
         bool _supportsMaterials = true;
         std::map<ON_UUID, std::vector<std::shared_ptr<ospray::cpp::Geometry> > > _geometry;
-        std::map<const CRhRdkMaterial*, std::shared_ptr<ospray::cpp::Material> > _materials;
+        //! \todo Is the material instance name the right key to use?
+        std::map<const std::string, std::shared_ptr<ospray::cpp::Material> > _materials;
         std::map<ON__UINT32, std::shared_ptr<ospray::cpp::Instance> > _instances;
         std::shared_ptr<ospray::cpp::Light>_sun;
         std::shared_ptr<ospray::cpp::Light> _ambient;
-        std::map<ON_UUID, ospray::cpp::Light> _lights;
+        std::map<ON_UUID, std::shared_ptr<ospray::cpp::Light> > _lights;
         std::shared_ptr<ospray::cpp::Instance> _groundPlane;
     };
 

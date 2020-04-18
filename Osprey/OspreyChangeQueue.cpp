@@ -168,7 +168,7 @@ namespace Osprey
                         if (geometry)
                         {
                             ospray::cpp::GeometricModel model(*geometry);
-                            if (auto material = that->_getMaterial(rdkInstance->MaterialId()))
+                            if (auto material = that->_getMaterial(MaterialFromId(rdkInstance->MaterialId())))
                             {
                                 model.setParam("material", *material);
                             }
@@ -204,6 +204,10 @@ namespace Osprey
 
             _sun->commit();
         }
+        else
+        {
+            that->_sun.reset();
+        }
 	}
 
 	void ChangeQueue::ApplySkylightChanges(const Skylight& rhinoSkylight) const
@@ -218,78 +222,108 @@ namespace Osprey
 
             _ambient->commit();
         }
+        else
+        {
+            that->_ambient.reset();
+        }
 	}
 
-	void ChangeQueue::ApplyLightChanges(const ON_SimpleArray<const Light*>& onLights) const
+	void ChangeQueue::ApplyLightChanges(const ON_SimpleArray<const Light*>& rhinoLights) const
 	{
         auto that = const_cast<ChangeQueue*>(this);
         const auto& vp = QueueView()->m_vp;
-        for (int i = 0; i < onLights.Count(); ++i)
+        for (int i = 0; i < rhinoLights.Count(); ++i)
         {
-            const auto& onLight = onLights[i]->LightData();
-            if (onLight.IsEnabled())
+            const auto rhinoLight = rhinoLights[i];
+            const auto& onLight = rhinoLights[i]->LightData();
+            switch (rhinoLight->Event())
             {
-                ospray::cpp::Light light;
-                if (onLight.IsPointLight())
+            case CRhinoEventWatcher::light_event::light_added:
+            case CRhinoEventWatcher::light_event::light_undeleted:
+            {
+                if (onLight.IsEnabled())
                 {
-                    light = ospray::cpp::Light("sphere");
+                    std::shared_ptr<ospray::cpp::Light> light;
+                    if (onLight.IsPointLight())
+                    {
+                        light = std::make_shared<ospray::cpp::Light>("sphere");
+                    }
+                    else if (onLight.IsDirectionalLight())
+                    {
+                        light = std::make_shared<ospray::cpp::Light>("distant");
+                    }
+                    else if (onLight.IsSpotLight())
+                    {
+                        light = std::make_shared<ospray::cpp::Light>("spot");
+                    }
+                    else if (onLight.IsLinearLight())
+                    {
 
-                    const auto cs = onLight.CoordinateSystem();
-                    ON_Xform onXform;
-                    onLight.GetLightXform(vp, ON::world_cs, onXform);
-                    const auto& onLocation = onLight.Location();
-                    const ospcommon::math::vec3f pos = fromRhino(onXform * onLocation);
-                    light.setParam("position", pos);
+                    }
+                    else if (onLight.IsRectangularLight())
+                    {
 
-                    light.setParam("radius", 0.F);
+                    }
+                    if (light)
+                    {
+                        _convertLight(onLight, vp, light);
+                        that->_lights[onLight.m_light_id] = light;
+                    }
                 }
-                else if (onLight.IsDirectionalLight())
+                else
                 {
-                    light = ospray::cpp::Light("distant");
-
-                    const auto cs = onLight.CoordinateSystem();
-                    ON_Xform onXform;
-                    onLight.GetLightXform(vp, ON::world_cs, onXform);
-                    light.setParam("direction", fromRhino(onXform * onLight.Direction()));
+                    const auto j = that->_lights.find(onLight.m_light_id);
+                    if (j != that->_lights.end())
+                    {
+                        that->_lights.erase(j);
+                    }
                 }
-                else if (onLight.IsSpotLight())
+                break;
+            }
+            case CRhinoEventWatcher::light_event::light_deleted:
+            {
+                const auto j = that->_lights.find(onLight.m_light_id);
+                if (j != that->_lights.end())
                 {
-                    light = ospray::cpp::Light("spot");
-
-                    const auto cs = onLight.CoordinateSystem();
-                    ON_Xform onXform;
-                    onLight.GetLightXform(vp, ON::world_cs, onXform);
-                    const auto& onLocation = onLight.Location();
-                    const auto& onDirection = onLight.Direction();
-                    const ospcommon::math::vec3f pos = fromRhino(onXform * onLocation);
-                    const ospcommon::math::vec3f dir = fromRhino(onXform * onDirection);
-                    light.setParam("position", pos);
-                    light.setParam("direction", dir);
-
-                    const float angle = onLight.SpotAngleDegrees();
-                    light.setParam("openingAngle", angle * 2.F);
-                    light.setParam("penumbraAngle", 0.F);
-                    light.setParam("radius", 0.F);
+                    that->_lights.erase(j);
                 }
-                else if (onLight.IsLinearLight())
+                break;
+            }
+            case CRhinoEventWatcher::light_event::light_modified:
+            {
+                const auto j = that->_lights.find(onLight.m_light_id);
+                if (j != that->_lights.end())
                 {
-
+                    _convertLight(onLight, vp, j->second);
                 }
-                else if (onLight.IsRectangularLight())
-                {
-
-                }
-                if (light)
-                {
-                    light.setParam("color", fromRhino(onLight.Diffuse()));
-                    light.setParam("intensity", static_cast<float>(onLight.Intensity()) * lightIntensityMul);
-
-                    light.commit();
-                    that->_lights[onLight.m_light_id] = light;
-                }
+                break;
+            }
+            default: break;
             }
         }
 	}
+
+    void ChangeQueue::ApplyMaterialChanges(const ON_SimpleArray<const Material*>& rhinoMaterials) const
+    {
+        auto that = const_cast<ChangeQueue*>(this);
+        for (int i = 0; i < rhinoMaterials.Count(); ++i)
+        {
+            const auto rhinoMaterial = rhinoMaterials[i];
+            const auto rdkMaterial = MaterialFromId(rhinoMaterial->MaterialId());
+            const std::string instanceName = ON_String(rdkMaterial->InstanceName());
+            const auto l = _materials.find(instanceName);
+            if (l != _materials.end())
+            {
+                _convertMaterial(rdkMaterial, l->second);
+            }
+            else
+            {
+                auto material = std::make_shared<ospray::cpp::Material>(_rendererName, "obj");
+                _convertMaterial(rdkMaterial, material);
+                that->_materials[instanceName] = material;
+            }
+        }
+    }
 
 	void ChangeQueue::ApplyEnvironmentChanges(IRhRdkCurrentEnvironment::Usage) const
 	{
@@ -311,7 +345,7 @@ namespace Osprey
             geom.commit();
 
             ospray::cpp::GeometricModel model(geom);
-            if (auto material = that->_getMaterial(rhinoGroundPlane.MaterialId()))
+            if (auto material = that->_getMaterial(MaterialFromId(rhinoGroundPlane.MaterialId())))
             {
                 model.setParam("material", *material);
             }
@@ -370,7 +404,7 @@ namespace Osprey
         }
         for (const auto& i : _lights)
         {
-            lights.push_back(i.second);
+            lights.push_back(*i.second);
         }
         if (lights.size())
         {
@@ -433,11 +467,78 @@ namespace Osprey
         out->commit();
     }
 
-    std::shared_ptr<ospray::cpp::Material> ChangeQueue::_getMaterial(ON__UINT32 value)
+    void ChangeQueue::_convertLight(const ON_Light& onLight, const ON_Viewport& vp, const std::shared_ptr<ospray::cpp::Light>& out)
+    {
+        if (onLight.IsPointLight())
+        {
+            const auto cs = onLight.CoordinateSystem();
+            ON_Xform onXform;
+            onLight.GetLightXform(vp, ON::world_cs, onXform);
+            const auto& onLocation = onLight.Location();
+            const ospcommon::math::vec3f pos = fromRhino(onXform * onLocation);
+            out->setParam("position", pos);
+
+            out->setParam("radius", 0.F);
+        }
+        else if (onLight.IsDirectionalLight())
+        {
+            const auto cs = onLight.CoordinateSystem();
+            ON_Xform onXform;
+            onLight.GetLightXform(vp, ON::world_cs, onXform);
+            out->setParam("direction", fromRhino(onXform * onLight.Direction()));
+        }
+        else if (onLight.IsSpotLight())
+        {
+            const auto cs = onLight.CoordinateSystem();
+            ON_Xform onXform;
+            onLight.GetLightXform(vp, ON::world_cs, onXform);
+            const auto& onLocation = onLight.Location();
+            const auto& onDirection = onLight.Direction();
+            const ospcommon::math::vec3f pos = fromRhino(onXform * onLocation);
+            const ospcommon::math::vec3f dir = fromRhino(onXform * onDirection);
+            out->setParam("position", pos);
+            out->setParam("direction", dir);
+
+            const float angle = onLight.SpotAngleDegrees();
+            out->setParam("openingAngle", angle * 2.F);
+            out->setParam("penumbraAngle", 0.F);
+            out->setParam("radius", 0.F);
+        }
+        else if (onLight.IsLinearLight())
+        {
+
+        }
+        else if (onLight.IsRectangularLight())
+        {
+
+        }
+
+        out->setParam("color", fromRhino(onLight.Diffuse()));
+        out->setParam("intensity", static_cast<float>(onLight.Intensity()) * lightIntensityMul);
+
+        out->commit();
+    }
+
+    void ChangeQueue::_convertMaterial(const CRhRdkMaterial* rdkMaterial, const std::shared_ptr<ospray::cpp::Material>& out)
+    {
+        auto onMaterial = rdkMaterial->SimulatedMaterial();
+        const ospcommon::math::vec3f kd = fromRhino(onMaterial.Diffuse());
+        out->setParam("kd", kd);
+
+        //const ospcommon::math::vec3f ks = fromRhino(onMaterial.Specular());
+        //out.setParam("ks", ks);
+
+        out->setParam("ns", static_cast<float>(onMaterial.Shine() / ON_Material::MaxShine) * 100.F);
+        out->setParam("d", static_cast<float>(1.0 - onMaterial.Transparency()));
+
+        out->commit();
+    }
+
+    std::shared_ptr<ospray::cpp::Material> ChangeQueue::_getMaterial(const CRhRdkMaterial* rdkMaterial)
     {
         std::shared_ptr<ospray::cpp::Material> out;
-        const auto rdkMaterial = MaterialFromId(value);
-        const auto l = _materials.find(rdkMaterial);
+        const std::string instanceName = ON_String(rdkMaterial->InstanceName());
+        const auto l = _materials.find(instanceName);
         if (l != _materials.end())
         {
             out = l->second;
@@ -445,19 +546,8 @@ namespace Osprey
         else if (_supportsMaterials)
         {
             out = std::make_shared<ospray::cpp::Material>(_rendererName, "obj");
-
-            auto onMaterial = rdkMaterial->SimulatedMaterial();
-            const ospcommon::math::vec3f kd = fromRhino(onMaterial.Diffuse());
-            out->setParam("kd", kd);
-
-            //const ospcommon::math::vec3f ks = fromRhino(onMaterial.Specular());
-            //out.setParam("ks", ks);
-
-            out->setParam("ns", static_cast<float>(onMaterial.Shine() / ON_Material::MaxShine) * 100.F);
-            out->setParam("d", static_cast<float>(1.0 - onMaterial.Transparency()));
-
-            out->commit();
-            _materials[rdkMaterial] = out;
+            _convertMaterial(rdkMaterial, out);
+            _materials[instanceName] = out;
         }
         return out;
     }
