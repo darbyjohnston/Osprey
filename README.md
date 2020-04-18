@@ -173,26 +173,6 @@ Test machines:
 * Xeon E5-1630: 1h 1m 38s
 * Ryzen 7 1700:
 
-#### MN08 Camera 2, OSPRay Path Tracer
-![NYC MN08 Camera 2, OSPRay Path Tracer](Images/NYC_MN08-Camera_2-OSPRay_pathtracer.png)
-* Xeon E5-1630: 2m 10s
-* Ryzen 7 1700: 1m 26s
-
-#### MN08 Camera 2, OSPRay SciVis Renderer
-![NYC MN08 Camera 2, OSPRay SciVis Renderer](Images/NYC_MN08-Camera_2-OSPRay_scivis.png)
-* Xeon E5-1630: 1m 48s
-* Ryzen 7 1700: 1m 25s
-
-#### MN08 Camera 2, Rhino 6 Renderer
-![NYC MN08 Camera 2, Rhino 6 Renderer](Images/NYC_MN08-Camera_2-Rhino_6.png)
-* Xeon E5-1630: 19m 13s
-* Ryzen 7 1700: 16m 49s
-
-#### MN08 Camera 2, Rhino 7 WIP Renderer
-![NYC MN08 Camera 2, Rhino 7 WIP Renderer](Images/NYC_MN08-Camera_2-Rhino_7_WIP.png)
-* Xeon E5-1630: 57m 15s
-* Ryzen 7 1700:
-
 
 Building the Plugin
 ===================
