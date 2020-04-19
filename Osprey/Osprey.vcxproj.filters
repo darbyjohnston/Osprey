@@ -54,6 +54,9 @@
     <ClCompile Include="OspreyDisplayMode.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="OspreyData.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="OspreyApp.h">
@@ -102,6 +105,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="OspreyDisplayMode.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="OspreyData.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

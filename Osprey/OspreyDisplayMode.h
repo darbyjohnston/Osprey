@@ -3,8 +3,8 @@
 
 #pragma once
 
+#include "OspreyData.h"
 #include "OspreyEnum.h"
-#include "OspreyUtil.h"
 #include "OspreyValueObserver.h"
 
 namespace Osprey
@@ -59,17 +59,9 @@ namespace Osprey
 
 		std::unique_ptr<IRhRdkRenderWindow> _rdkRenderWindow;
 
-        Renderer _renderer = Renderer::First;
-        Passes _passes = Passes::First;
-        PreviewPasses _previewPasses = PreviewPasses::First;
-        PixelSamples _pixelSamples = PixelSamples::First;
-        AOSamples _aoSamples = AOSamples::First;
-        bool _denoiserFound = false;
-        bool _denoiserEnabled = false;
-        bool _toneMapperEnabled = false;
-        Exposure _toneMapperExposure = Exposure::First;
-
-        std::shared_ptr<Data> _data;
+        Options _options;
+        std::shared_ptr<Update> _update;
+        std::shared_ptr<Scene> _scene;
         std::shared_ptr<ChangeQueue> _changeQueue;
 		std::shared_ptr<Render> _render;
 		std::thread _renderThread;

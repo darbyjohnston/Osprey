@@ -121,4 +121,12 @@ namespace Osprey
     float getExposureValue(Exposure);
     std::wstring getExposureLabel(Exposure);
 
+    enum class BackgroundType
+    {
+        Solid,
+        Image,
+        Gradient,
+        Environment
+    };
+
 } // namespace Osprey

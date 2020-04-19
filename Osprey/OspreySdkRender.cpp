@@ -15,31 +15,32 @@ OspreySdkRender::OspreySdkRender(
 	CRhinoRenderPlugIn& plugin,
 	const ON_wString& sCaption,
 	UINT id) :
-	CRhRdkSdkRender(context, plugin, sCaption, id),
-    _passes(Osprey::getPassesValue(settings->observePasses()->get())),
-    _previewPasses(Osprey::getPreviewPassesValue(settings->observePreviewPasses()->get()))
+	CRhRdkSdkRender(context, plugin, sCaption, id)
 {
-    _data = std::make_shared<Osprey::Data>();
-    _data->world = std::make_shared<ospray::cpp::World>();
+    _options.rendererName = Osprey::getRendererValue(settings->observeRenderer()->get());
+    _options.supportsMaterials = Osprey::getRendererSupportsMaterials(settings->observeRenderer()->get());
+    _options.passes = Osprey::getPassesValue(settings->observePasses()->get());
+    _options.previewPasses = Osprey::getPreviewPassesValue(settings->observePreviewPasses()->get());
+    _options.pixelSamples = Osprey::getPixelSamplesValue(settings->observePixelSamples()->get());
+    _options.aoSamples = Osprey::getAOSamplesValue(settings->observeAOSamples()->get());
+    _options.denoiserFound = settings->observeDenoiserFound()->get();
+    _options.denoiserEnabled = settings->observeDenoiserEnabled()->get();
+    _options.toneMapperEnabled = settings->observeToneMapperEnabled()->get();
+    _options.toneMapperExposure = Osprey::getExposureValue(settings->observeToneMapperExposure()->get());
+    _options.flipY = true;
+
+    _update = std::make_shared<Osprey::Update>();
+
+    _scene = std::make_shared<Osprey::Scene>();
+    _scene->world = ospray::cpp::World();
 
     const auto rhinoDoc = context.Document();
     const auto& view = RhinoApp().ActiveView()->ActiveViewport().View();
-    _changeQueue = std::shared_ptr<Osprey::ChangeQueue>(new Osprey::ChangeQueue(*rhinoDoc, view, _data));
-    const Osprey::Renderer renderer = settings->observeRenderer()->get();
-    const std::string rendererName = Osprey::getRendererValue(renderer);
-    _changeQueue->setRendererName(rendererName, Osprey::getRendererSupportsMaterials(renderer));
+    _changeQueue = std::shared_ptr<Osprey::ChangeQueue>(new Osprey::ChangeQueue(*rhinoDoc, view, _update, _scene));
+    _changeQueue->setRendererName(_options.rendererName, _options.supportsMaterials);
     _changeQueue->CreateWorld();
 
     _render = Osprey::Render::create();
-    _render->setRendererName(rendererName);
-    _render->setPreviewPasses(Osprey::getPreviewPassesValue(settings->observePreviewPasses()->get()));
-    _render->setPixelSamples(Osprey::getPixelSamplesValue(settings->observePixelSamples()->get()));
-    _render->setAOSamples(Osprey::getAOSamplesValue(settings->observeAOSamples()->get()));
-    _render->setDenoiserFound(settings->observeDenoiserFound()->get());
-    _render->setDenoiserEnabled(settings->observeDenoiserEnabled()->get());
-    _render->setToneMapperEnabled(settings->observeToneMapperEnabled()->get());
-    _render->setToneMapperExposure(getExposureValue(settings->observeToneMapperExposure()->get()));
-    _render->setFlipY(true);
 
 	auto& rhinoRenderWindow = GetRenderWindow();
 	rhinoRenderWindow.ClearChannels();
@@ -65,8 +66,8 @@ CRhinoSdkRender::RenderReturnCodes OspreySdkRender::Render(const ON_2iSize& rend
 	auto& rdkRenderWindow = GetRenderWindow();
 	rdkRenderWindow.SetSize(renderSize);
 
-    _windowSize = Osprey::fromRhino(renderSize);
-    _renderRect = ospcommon::math::box2i(
+    _scene->renderSize = Osprey::fromRhino(renderSize);
+    _scene->renderRect = ospcommon::math::box2i(
         ospcommon::math::vec2i(0, 0),
         ospcommon::math::vec2i(renderSize.cx, renderSize.cy));
 
@@ -83,13 +84,13 @@ CRhinoSdkRender::RenderReturnCodes OspreySdkRender::RenderWindow(CRhinoView* rhi
 	if (!rhinoDoc)
 		return CRhinoSdkRender::render_error_starting_render;
 
-    _windowSize = Osprey::fromRhino(RenderSize(*rhinoDoc, true));
-    _renderRect = ospcommon::math::box2i(
+    _scene->renderSize = Osprey::fromRhino(RenderSize(*rhinoDoc, true));
+    _scene->renderRect = ospcommon::math::box2i(
         ospcommon::math::vec2i(pRect->left, pRect->top),
         ospcommon::math::vec2i(pRect->right, pRect->bottom));
 
 	auto& rdkRenderWindow = GetRenderWindow();
-	rdkRenderWindow.SetSize(Osprey::toRhino(_renderRect.size()));
+	rdkRenderWindow.SetSize(Osprey::toRhino(_scene->renderRect.size()));
 
 	CRhinoSdkRender::RenderReturnCodes rc;
 	if (bInPopupWindow)
@@ -181,23 +182,21 @@ void OspreySdkRender::ThreadedRender(void)
 {
 	m_bCancel = false;
 
-    _render->initRender(_windowSize, _renderRect);
+    _render->init(_options, _scene);
 
 	auto& rhinoRenderWindow = GetRenderWindow();
-	for (size_t pass = 0; pass < _passes + _previewPasses; ++pass)
+    const size_t totalPasses = _options.passes + _options.previewPasses;
+	for (size_t pass = 0; pass < totalPasses && !m_bCancel; ++pass)
 	{
         ON_wString s = ON_wString::FormatToString(L"Rendering pass %d...", pass + 1);
-        rhinoRenderWindow.SetProgress(s, static_cast<int>(pass / static_cast<float>(_passes) * 100));
+        rhinoRenderWindow.SetProgress(s, static_cast<int>(pass / static_cast<float>(totalPasses) * 100));
 
-        _render->renderPass(pass, _data->world, _data->camera, rhinoRenderWindow);
+        _render->render(pass, rhinoRenderWindow);
 
-        if (pass == _passes - 1)
+        if (pass == totalPasses - 1)
         {
             rhinoRenderWindow.SetProgress("Render finished.", 100);
         }
-
-		if (m_bCancel)
-			break;
 	}
 
 	SetContinueModal(false);

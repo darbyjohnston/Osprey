@@ -27,10 +27,12 @@ namespace Osprey
 	ChangeQueue::ChangeQueue(
         const CRhinoDoc& rhinoDoc,
         const ON_3dmView& onView,
-        const std::shared_ptr<Data>& data) :
+        const std::shared_ptr<Update>& update,
+        const std::shared_ptr<Scene>& scene) :
 		RhRdk::Realtime::ChangeQueue(rhinoDoc, ON_nil_uuid, onView, nullptr, false, true),
         _rhinoDoc(rhinoDoc),
-        _data(data)
+        _update(update),
+        _scene(scene)
 	{}
 
     ChangeQueue::~ChangeQueue()
@@ -66,8 +68,8 @@ namespace Osprey
             }
             if (instances.size())
             {
-                _data->world->setParam("instance", ospray::cpp::Data(instances));
-                _data->world->commit();
+                _scene->world.setParam("instance", ospray::cpp::Data(instances));
+                _scene->world.commit();
             }
         }
 
@@ -90,8 +92,8 @@ namespace Osprey
             }
             if (lights.size())
             {
-                _data->world->setParam("light", ospray::cpp::Data(lights));
-                _data->world->commit();
+                _scene->world.setParam("light", ospray::cpp::Data(lights));
+                _scene->world.commit();
             }
         }
     }
@@ -103,9 +105,10 @@ namespace Osprey
     {
         auto that = const_cast<ChangeQueue*>(this);
         {
-            std::lock_guard<std::mutex> lock(that->_data->mutex);
-            that->_data->updates = true;
+            std::lock_guard<std::mutex> lock(that->_update->mutex);
+            that->_update->update = true;
         }
+        that->_update->cv.notify_one();
     }
 
     void ChangeQueue::NotifyDynamicUpdatesAreAvailable() const
@@ -123,47 +126,39 @@ namespace Osprey
         const float cameraNear = vp.PerspectiveMinNearDist();
         if (vp.IsPerspectiveProjection())
         {
-            if (!_data->camera || _data->cameraType != CameraType::Perspective)
-            {
-                that->_data->camera = std::make_shared<ospray::cpp::Camera>("perspective");
-                that->_data->cameraType = CameraType::Perspective;
-            }
+            that->_scene->camera = ospray::cpp::Camera("perspective");
 
-            _data->camera->setParam("position", cameraPos);
-            _data->camera->setParam("direction", cameraDir);
-            _data->camera->setParam("up", cameraUp);
-            _data->camera->setParam("nearClip", cameraNear);
+            _scene->camera.setParam("position", cameraPos);
+            _scene->camera.setParam("direction", cameraDir);
+            _scene->camera.setParam("up", cameraUp);
+            _scene->camera.setParam("nearClip", cameraNear);
 
             double halfDiagonalAngle = 0.0;
             double halfVerticalAngle = 0.0;
             double halfHorizontalAngle = 0.0;
             vp.GetCameraAngle(&halfDiagonalAngle, &halfVerticalAngle, &halfHorizontalAngle);
             const float cameraFovY = static_cast<float>(halfVerticalAngle * 2.0 / double(ospcommon::math::two_pi) * 360.0);
-            _data->camera->setParam("fovy", cameraFovY);
+            _scene->camera.setParam("fovy", cameraFovY);
 
-            _data->camera->commit();
+            _scene->camera.commit();
         }
         else if (vp.IsParallelProjection())
         {
-            if (!_data->camera || _data->cameraType != CameraType::Orthographic)
-            {
-                that->_data->camera = std::make_shared<ospray::cpp::Camera>("orthographic");
-                that->_data->cameraType = CameraType::Orthographic;
-            }
+            that->_scene->camera = ospray::cpp::Camera("orthographic");
 
-            _data->camera->setParam("position", cameraPos);
-            _data->camera->setParam("direction", cameraDir);
-            _data->camera->setParam("up", cameraUp);
-            _data->camera->setParam("nearClip", cameraNear);
+            _scene->camera.setParam("position", cameraPos);
+            _scene->camera.setParam("direction", cameraDir);
+            _scene->camera.setParam("up", cameraUp);
+            _scene->camera.setParam("nearClip", cameraNear);
 
             const float height = static_cast<float>(vp.FrustumHeight());
-            _data->camera->setParam("height", height);
+            _scene->camera.setParam("height", height);
 
-            _data->camera->commit();
+            _scene->camera.commit();
         }
         else
         {
-            _data->camera.reset();
+            _scene->camera = ospray::cpp::Camera();
         }
 	}
 
@@ -538,9 +533,16 @@ namespace Osprey
         }
     }
 
-	void ChangeQueue::ApplyEnvironmentChanges(IRhRdkCurrentEnvironment::Usage) const
+	void ChangeQueue::ApplyEnvironmentChanges(IRhRdkCurrentEnvironment::Usage usage) const
 	{
         auto that = const_cast<ChangeQueue*>(this);
+
+        auto id = EnvironmentIdForUsage(usage);
+        if (auto rdkEnv = EnvironmentFromId(id))
+        {
+            CRhRdkSimulatedEnvironment rdkSimEnv;
+            rdkEnv->SimulateEnvironment(rdkSimEnv);
+        }
     }
 
 	void ChangeQueue::ApplyGroundPlaneChanges(const GroundPlane& rhinoGroundPlane) const
@@ -586,9 +588,27 @@ namespace Osprey
         auto that = const_cast<ChangeQueue*>(this);
     }
 
-    void ChangeQueue::ApplyRenderSettingsChanges(const ON_3dmRenderSettings&) const
+    void ChangeQueue::ApplyRenderSettingsChanges(const ON_3dmRenderSettings& onRenderSettings) const
     {
         auto that = const_cast<ChangeQueue*>(this);
+
+        if (onRenderSettings.m_bCustomImageSize)
+        {
+            that->_scene->renderSize.x = onRenderSettings.m_image_width;
+            that->_scene->renderSize.y = onRenderSettings.m_image_height;
+            that->_scene->renderRect.upper.x = onRenderSettings.m_image_width;
+            that->_scene->renderRect.upper.y = onRenderSettings.m_image_height;
+        }
+
+        switch (onRenderSettings.m_background_style)
+        {
+        case 1: that->_scene->background.type = BackgroundType::Image; break;
+        case 2: that->_scene->background.type = BackgroundType::Gradient; break;
+        case 3: that->_scene->background.type = BackgroundType::Environment; break;
+        default: that->_scene->background.type = BackgroundType::Solid; break;
+        }
+        that->_scene->background.color = fromRhino(onRenderSettings.m_background_color);
+        that->_scene->background.color2 = fromRhino(onRenderSettings.m_background_bottom_color);
     }
 
     void ChangeQueue::ApplyClippingPlaneChanges(

@@ -6,6 +6,7 @@
 #include "OspreyDisplayMode.h"
 #include "OspreyRender.h"
 #include "OspreySettings.h"
+#include "OspreyUtil.h"
 
 namespace Osprey
 {
@@ -20,10 +21,11 @@ namespace Osprey
 	DisplayMode::DisplayMode(const CRhinoDisplayPipeline& pipeline, const std::shared_ptr<Settings>& settings) :
 		RhRdk::Realtime::DisplayMode(pipeline)
 	{
-        _data = std::make_shared<Data>();
-        _data->updates = false;
-        _data->world = std::make_shared<ospray::cpp::World>();
-        //_data->world.setParam("dynamicScene", int(RTC_SCENE_FLAG_DYNAMIC));
+        _update = std::make_shared<Update>();
+
+        _scene = std::make_shared<Scene>();
+        _scene->world = ospray::cpp::World();
+        //_scene->world.setParam("dynamicScene", int(RTC_SCENE_FLAG_DYNAMIC));
         _renderRunning = false;
 
         // Listen for settings changes.
@@ -31,73 +33,100 @@ namespace Osprey
             settings->observeRenderer(),
             [this](Renderer value)
         {
-            std::lock_guard<std::mutex> lock(_data->mutex);
-            _data->updates = true;
-            _renderer = value;
+            {
+                std::lock_guard<std::mutex> lock(_update->mutex);
+                _update->update = true;
+                _options.rendererName = getRendererValue(value);
+            }
+            _update->cv.notify_one();
         });
         _passesObserver = ValueObserver<Passes>::create(
             settings->observePasses(),
             [this](Passes value)
         {
-            std::lock_guard<std::mutex> lock(_data->mutex);
-            _data->updates = true;
-            _passes = value;
+            {
+                std::lock_guard<std::mutex> lock(_update->mutex);
+                _update->update = true;
+                _options.passes = getPassesValue(value);
+            }
+            _update->cv.notify_one();
         });
         _previewPassesObserver = ValueObserver<PreviewPasses>::create(
             settings->observePreviewPasses(),
             [this](PreviewPasses value)
         {
-            std::lock_guard<std::mutex> lock(_data->mutex);
-            _data->updates = true;
-            _previewPasses = value;
+            {
+                std::lock_guard<std::mutex> lock(_update->mutex);
+                _update->update = true;
+                _options.previewPasses = getPreviewPassesValue(value);
+            }
+            _update->cv.notify_one();
         });
         _pixelSamplesObserver = ValueObserver<PixelSamples>::create(
             settings->observePixelSamples(),
             [this](PixelSamples value)
         {
-            std::lock_guard<std::mutex> lock(_data->mutex);
-            _data->updates = true;
-            _pixelSamples = value;
+            {
+                std::lock_guard<std::mutex> lock(_update->mutex);
+                _update->update = true;
+                _options.pixelSamples = getPixelSamplesValue(value);
+            }
+            _update->cv.notify_one();
         });
         _aoSamplesObserver = ValueObserver<AOSamples>::create(
             settings->observeAOSamples(),
             [this](AOSamples value)
         {
-            std::lock_guard<std::mutex> lock(_data->mutex);
-            _data->updates = true;
-            _aoSamples = value;
+            {
+                std::lock_guard<std::mutex> lock(_update->mutex);
+                _update->update = true;
+                _options.aoSamples = getAOSamplesValue(value);
+            }
+            _update->cv.notify_one();
         });
         _denoiserFoundObserver = ValueObserver<bool>::create(
             settings->observeDenoiserFound(),
             [this](bool value)
         {
-            std::lock_guard<std::mutex> lock(_data->mutex);
-            _data->updates = true;
-            _denoiserFound = value;
+            {
+                std::lock_guard<std::mutex> lock(_update->mutex);
+                _update->update = true;
+                _options.denoiserFound = value;
+            }
+            _update->cv.notify_one();
         });
         _denoiserEnabledObserver = ValueObserver<bool>::create(
             settings->observeDenoiserEnabled(),
             [this](bool value)
         {
-            std::lock_guard<std::mutex> lock(_data->mutex);
-            _data->updates = true;
-            _denoiserEnabled = value;
+            {
+                std::lock_guard<std::mutex> lock(_update->mutex);
+                _update->update = true;
+                _options.denoiserEnabled = value;
+            }
+            _update->cv.notify_one();
         });
         _toneMapperEnabledObserver = ValueObserver<bool>::create(
             settings->observeToneMapperEnabled(),
             [this](bool value)
         {
-            std::lock_guard<std::mutex> lock(_data->mutex);
-            _data->updates = true;
-            _toneMapperEnabled = value;
+            {
+                std::lock_guard<std::mutex> lock(_update->mutex);
+                _update->update = true;
+                _options.toneMapperEnabled = value;
+            }
+            _update->cv.notify_one();
         });
         _toneMapperExposureObserver = ValueObserver<Exposure>::create(
             settings->observeToneMapperExposure(),
             [this](Exposure value)
         {
-            std::lock_guard<std::mutex> lock(_data->mutex);
-            _data->updates = true;
-            _toneMapperExposure = value;
+            {
+                std::lock_guard<std::mutex> lock(_update->mutex);
+                _update->update = true;
+                _options.toneMapperExposure = getExposureValue(value);
+            }
+            _update->cv.notify_one();
         });
 	}
 
@@ -122,6 +151,10 @@ namespace Osprey
 		const ON_Viewport& onVp,
 		const RhRdk::Realtime::DisplayMode* pParent)
 	{
+        _update->update = true;
+        _scene->renderSize = fromRhino(onSize);
+        _scene->renderRect.upper = _scene->renderSize;
+
         // Create the render window.
 		_rdkRenderWindow.reset(IRhRdkRenderWindow::New());
 		if (!_rdkRenderWindow)
@@ -134,21 +167,12 @@ namespace Osprey
 		}
 
         // Create the change queue.
-        _changeQueue = std::shared_ptr<ChangeQueue>(new ChangeQueue(rhinoDoc, onView, _data));
-        const auto rendererName = getRendererValue(_renderer);
-        _changeQueue->setRendererName(rendererName, getRendererSupportsMaterials(_renderer));
+        _changeQueue = std::shared_ptr<ChangeQueue>(new ChangeQueue(rhinoDoc, onView, _update, _scene));
+        _changeQueue->setRendererName(_options.rendererName, _options.supportsMaterials);
         _changeQueue->CreateWorld();
 
         // Create the renderer.
 		_render = Render::create();
-        _render->setRendererName(rendererName);
-        _render->setPreviewPasses(getPreviewPassesValue(_previewPasses));
-        _render->setPixelSamples(getPixelSamplesValue(_pixelSamples));
-        _render->setAOSamples(getAOSamplesValue(_aoSamples));
-        _render->setDenoiserFound(_denoiserFound);
-        _render->setDenoiserEnabled(_denoiserEnabled);
-        _render->setToneMapperEnabled(_toneMapperEnabled);
-        _render->setToneMapperExposure(getExposureValue(_toneMapperExposure));
         _startRenderer();
 
 		return true;
@@ -156,21 +180,25 @@ namespace Osprey
 
 	bool DisplayMode::OnRenderSizeChanged(const ON_2iSize& onSize)
 	{
-		_rdkRenderWindow->SetSize(onSize);
+        _renderRunning = false;
+        if (_renderThread.joinable())
+        {
+            _renderThread.join();
+        }
+        
+        _rdkRenderWindow->SetSize(onSize);
 		if (!_rdkRenderWindow->EnsureDib())
 		{
 			_rdkRenderWindow.reset();
 			return false;
 		}
 
-		_renderRunning = false;
-		if (_renderThread.joinable())
-		{
-			_renderThread.join();
-		}
+        _update->update = true;
+        _scene->renderSize = fromRhino(_rdkRenderWindow->Size());
+        _scene->renderRect.upper = _scene->renderSize;
 
-        _data->updates = true;
 		_startRenderer();
+
 		return true;
 	}
 
@@ -255,58 +283,40 @@ namespace Osprey
 
 	void DisplayMode::_startRenderer()
 	{
-        const ospcommon::math::vec2i renderSize = fromRhino(_rdkRenderWindow->Size());
-        _render->initRender(renderSize, ospcommon::math::box2i(ospcommon::math::vec2i(), renderSize));
-
         _renderRunning = true;
 		_renderThread = std::thread([this]
 		{
-            bool updates = false;
-            Renderer renderer = Renderer::First;
-            bool rendererChanged = false;
-            Passes passes = Passes::First;
-            PreviewPasses previewPasses = PreviewPasses::First;
-            PixelSamples pixelSamples = PixelSamples::First;
-            AOSamples aoSamples = AOSamples::First;
-            bool denoiserFound = false;
-            bool denoiserEnabled = false;
-            bool toneMapperEnabled = false;
-            Exposure toneMapperExposure = Exposure::First;
-
+            Options options;
+            {
+                std::unique_lock<std::mutex> lock(_update->mutex);
+                options = _options;
+            }
             while (_renderRunning)
 			{
                 // Check for updates or settings changes.
+                bool update = false;
+                bool rendererChanged = false;
                 {
-                    std::unique_lock<std::mutex> lock(_data->mutex, std::try_to_lock);
-                    if (lock.owns_lock())
+                    std::unique_lock<std::mutex> lock(_update->mutex);
+                    if (_update->cv.wait_for(
+                        lock,
+                        std::chrono::milliseconds(100),
+                        [this]
                     {
-                        updates = _data->updates;
-                        if (_data->updates)
-                        {
-                            _data->updates = false;
-                        }
-                        if (_renderer != renderer)
-                        {
-                            renderer = _renderer;
-                            rendererChanged = true;
-                        }
-                        passes = _passes;
-                        previewPasses = _previewPasses;
-                        pixelSamples = _pixelSamples;
-                        aoSamples = _aoSamples;
-                        denoiserFound = _denoiserFound;
-                        denoiserEnabled = _denoiserEnabled;
-                        toneMapperEnabled = _toneMapperEnabled;
-                        toneMapperExposure = _toneMapperExposure;
+                        return _update->update;
+                    }))
+                    {
+                        update = true;
+                        rendererChanged = _options.rendererName != options.rendererName;
+                        options = _options;
+                        _update->update = false;
                     }
                 }
 
-                const size_t previewPassesCount = getPreviewPassesValue(previewPasses);
-                if (updates)
+                if (update)
                 {
                     // Update the change queue.
-                    const auto rendererName = getRendererValue(renderer);
-                    _changeQueue->setRendererName(rendererName, getRendererSupportsMaterials(renderer));
+                    _changeQueue->setRendererName(options.rendererName, options.supportsMaterials);
                     if (rendererChanged)
                     {
                         rendererChanged = false;
@@ -318,30 +328,16 @@ namespace Osprey
                     }
 
                     // Update the renderer.
-                    _render->setRendererName(rendererName);
-                    _render->setPreviewPasses(previewPassesCount);
-                    _render->setPixelSamples(getPixelSamplesValue(pixelSamples));
-                    _render->setAOSamples(getAOSamplesValue(aoSamples));
-                    _render->setDenoiserFound(denoiserFound);
-                    _render->setDenoiserEnabled(denoiserEnabled);
-                    _render->setToneMapperEnabled(toneMapperEnabled);
-                    _render->setToneMapperExposure(getExposureValue(toneMapperExposure));
-                    const ospcommon::math::vec2i renderSize = fromRhino(_rdkRenderWindow->Size());
-                    _render->initRender(renderSize, ospcommon::math::box2i(ospcommon::math::vec2i(), renderSize));
+                    _render->init(options, _scene);
                     _pass = 0;
                 }
 
                 // Render a pass.
-                const size_t passesCount = getPassesValue(passes);
-                if (_pass < passesCount + previewPassesCount)
+                if (_pass < options.passes + options.previewPasses)
                 {
-                    _render->renderPass(_pass, _data->world, _data->camera, *_rdkRenderWindow);
+                    _render->render(_pass, *_rdkRenderWindow);
                     ++_pass;
                     SignalUpdate();
-                }
-                else
-                {
-                    Sleep(50);
                 }
             }
 		});

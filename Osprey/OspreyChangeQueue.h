@@ -3,11 +3,10 @@
 
 #pragma once
 
-#include "OspreyUtil.h"
-
 namespace Osprey
 {
-    struct DisplayModeData;
+    struct Scene;
+    struct Update;
 
     class ChangeQueue : public RhRdk::Realtime::ChangeQueue
     {
@@ -15,7 +14,8 @@ namespace Osprey
         ChangeQueue(
             const CRhinoDoc&,
             const ON_3dmView&,
-            const std::shared_ptr<Data>&);
+            const std::shared_ptr<Update>&,
+            const std::shared_ptr<Scene>&);
         ~ChangeQueue() override;
 
         void setRendererName(const std::string&, bool supportsMaterials = true);
@@ -52,19 +52,20 @@ namespace Osprey
         ospray::cpp::Material _getMaterial(const CRhRdkMaterial*);
 
         const CRhinoDoc& _rhinoDoc;
-        std::shared_ptr<Data> _data;
+        std::shared_ptr<Update> _update;
+        std::shared_ptr<Scene> _scene;
         std::string _rendererName;
         bool _supportsMaterials = true;
         std::map<ON_UUID, std::vector<ospray::cpp::Geometry> > _geometry;
         //! \todo Is the material instance name the right key to use?
         std::map<const std::wstring, ospray::cpp::Material> _materials;
         std::map<ON__UINT32, ospray::cpp::Instance> _instances;
+        std::shared_ptr<ospray::cpp::Instance> _groundPlane;
         bool _instancesInit = true;
         std::shared_ptr<ospray::cpp::Light>_sun;
         std::shared_ptr<ospray::cpp::Light> _ambient;
         std::map<ON_UUID, ospray::cpp::Light> _lights;
         bool _lightsInit = true;
-        std::shared_ptr<ospray::cpp::Instance> _groundPlane;
     };
 
 } // Osprey

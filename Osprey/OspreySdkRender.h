@@ -4,7 +4,7 @@
 #pragma once
 
 #include "OspreyEnum.h"
-#include "OspreyUtil.h"
+#include "OspreyData.h"
 
 namespace Osprey
 {
@@ -49,12 +49,10 @@ private:
 	bool m_bRenderQuick = false;
 	bool m_bCancel = false;
 
-    ospcommon::math::vec2i _windowSize;
-    ospcommon::math::box2i _renderRect;
-    std::shared_ptr<Osprey::Data> _data;
+    Osprey::Options _options;
+    std::shared_ptr<Osprey::Update> _update;
+    std::shared_ptr<Osprey::Scene> _scene;
     std::shared_ptr<Osprey::ChangeQueue> _changeQueue;
-    std::thread _renderThread;
     std::shared_ptr<Osprey::Render> _render;
-    size_t _passes = 0;
-    size_t _previewPasses = 0;
+    std::thread _renderThread;
 };
